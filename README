@@ -1,0 +1,151 @@
+This XDot was modified by Juha Jeronen, based on the original version 0.4 by José Fonseca.
+
+
+Modifications:
+
+- Added a "Find" feature for searching graph elements by the text they display. The search is always case-insensitive. By default the Find system runs in incremental mode; for viewing a large graph on a slow computer, there is a new "-N" command line option to use non-incremental mode.
+
+- The hover-over-node highlight system has been extended to make exploring large graphs easier. See section [Mouse behaviour and keyboard shortcuts] below.
+
+- The GraphViz layout filter for .dot files can now be changed in the GUI. Changing it will reload the current graph, using the newly selected layout.
+
+- Files in the .xdot format are now always loaded without a filter. The check is based on the filename extension; the "-n" command-line option is still provided for unfiltered reading of .xdot files from stdin.
+
+- An integrated help is provided, explaining the harder-to-discover features. This is implemented as a built-in .xdot graph, which is loaded when the help button is clicked.
+
+- Keyboard shortcuts added for Zoom to fit (F) and Zoom to 100% (1).
+
+- Keyboard shortcut added for Open (Ctrl+O).
+
+- Tooltips added for the toolbar buttons, with the text showing also the keyboard shortcuts.
+
+- The open dialog remembers the last used directory within the same session.
+
+- Focus animation now follows a nonlinear tanh spacing for a smoother-looking
+  experience (slow-fast-slow).
+
+- Animated highlighting (potentially heavy; can use "-b" to switch off).
+
+- Animated zooming and arrow-key panning (potentially heavy; can use "-a" to switch off).
+
+- Uses system highlight color, queried from GTK.
+
+  For nodes, the actual node highlight color is mixed from the node's original color
+  and alpha, and the system highlight with alpha=1.0.
+
+  For area zooming (shift+drag), the system highlight color is used with alpha=0.25.
+
+- [No graph loaded] is shown when no graph is loaded (input error, no filename on command line, etc.).
+
+- [Empty input] is shown when an empty graph is loaded (blank file, or valid graph but no nodes).
+
+- Minor UI fixes (e.g. mouse cursor now changes to busy while loading).
+
+
+In addition, the original contains some functionality that may be difficult to discover. Documenting these, from reading the source code:
+
+- Shift-dragging allows to select a rectangular area to zoom to.
+
+- Ctrl-dragging zooms smoothly.
+
+- Hovering the mouse cursor over a node highlights it.
+
+- Hovering over the end of a link (graph edge, "arrow") highlights the node at the other end of the link. (This is useful for exploring graphs.)
+
+- Clicking a highlighted node centers it. Animated. The animation automatically zooms out and back in, if the view is highly zoomed and the destination node is near the edge of the view. If the destination is clearly visible, then the animation just pans the view.
+
+- Clicking the end of a highlighted link (graph edge, "arrow") jumps to and centers the node at the other end of the link. (Animated.)
+
+
+--------------------------------------
+Mouse behaviour and keyboard shortcuts
+--------------------------------------
+
+Here is a complete list for both the original and modified versions of XDot. Unless otherwise specified, each item applies to both versions.
+
+-----
+Mouse
+-----
+
+Click the end of a link    = Center view to the node at the other end of the link
+Click a node               = Center view to clicked node
+
+Right-click end of link    = Center view to the node at the other end of the link
+                             and zoom to 100%                              [mod. version only]
+Right-click a node         = Center view to clicked node and zoom to 100%  [mod. version only]
+
+Hover on the end of a link = Highlight link and the node at the other end
+Hover on a node            = Highlight node                              [original version]
+                             Highlight node and all its outgoing links   [modified version]
+Alt+hover on a node        = Highlight node and all its incoming links   [modified version only]
+Shift+hover on a node      = Highlight node, all its outgoing links
+                             and the nodes connected by the links        [modified version only]
+Ctrl+hover on a node       = Highlight node, all its incoming links
+                             and the nodes connected by the links        [modified version only]
+
+Mouse wheel up/down        = Zoom view in/out
+Drag                       = Pan view
+Shift+drag                 = Zoom to area (choose the area while dragging)
+Ctrl+drag                  = Zoom smoothly
+
+Dragging accepts both left and middle buttons.
+
+--------
+Keyboard
+--------
+
+Arrow keys                 = Pan view
++, =, Page up, keypad +    = Zoom in
+-, Page down, keypad -     = Zoom out
+F                          = Zoom to fit            [modified version only]
+1, keypad 1                = Zoom to 100%           [modified version only]
+
+Ctrl+O                     = Open file...           [modified version only]
+R                          = Reload current file
+Q                          = Quit XDot
+
+Escape                     = Cancel current mouse drag action
+
+
+In addition, the modified version comes with a Find system:
+
+If in incremental Find mode (default):
+
+Ctrl+F or click Find field = Focus the Find field (re-highlighting all matches
+                             if the highlight has disappeared)
+typing [while in Find]     = Incremental search for the text that is being typed.
+                             Highlights all matches.
+Escape [while in Find]     = Clear the Find field and exit Find
+Return [while in Find]     = Jump to first match
+N                          = Jump to next match
+Shift+N                    = Jump to previous match
+
+If in non-incremental Find mode (using "-N" command line option):
+
+Ctrl+F or click Find field = Focus the Find field
+Escape [while in Find]     = Clear the Find field and exit Find
+Return [while in Find]     = Run the search for the current term
+                             and highlight all matches.
+N                          = First press:     jump to first match
+                             Further presses: jump to next match
+Shift+N                    = Jump to previous match
+
+Notes:
+
+- If there are no matches when the search runs, the background of the Find field becomes red. When there are matches, it turns back to white.
+
+- The highlight from Find disappears when the mouse pointer moves over the graph. This is intentional, so that it is possible to explore the graph normally. To re-show the highlight for the same search term, hover the mouse cursor over the Find field, or focus it by pressing Ctrl+F.
+
+- When cycling through the found items, they are (currently) not sorted into any meaningful order.
+
+
+This modified version is available at:
+
+https://yousource.it.jyu.fi/jjrandom2/miniprojects/blobs/master/refactoring/
+
+The original by José Fonseca is available at:
+
+https://code.google.com/p/jrfonseca/wiki/XDot#Download
+
+(Note that even current Linux distributions may ship a version which does not have the -n (no filter) option.)
+
