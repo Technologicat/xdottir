@@ -1543,7 +1543,9 @@ class Animation(object):
         self.dot_widget.animation = NoAnimation(self.dot_widget)
         self.t = 1.0
         if self.timeout_id is not None:
-            GLib.source_remove(self.timeout_id)
+            # FIXME: Maybe disable this. The timeout is automatically destroyed when the callback returns false.
+            # https://developer.gnome.org/pygobject/stable/glib-functions.html#function-glib--timeout-add
+            # GLib.source_remove(self.timeout_id)
             self.timeout_id = None
 
     def tick(self):
@@ -1631,7 +1633,9 @@ class ExpDecayAnimation(Animation):
         #
         self.t = 1.0
         if self.timeout_id is not None:
-            GLib.source_remove(self.timeout_id)
+            # FIXME: Maybe disable this. The timeout is automatically destroyed when the callback returns false.
+            # https://developer.gnome.org/pygobject/stable/glib-functions.html#function-glib--timeout-add
+            # GLib.source_remove(self.timeout_id)
             self.timeout_id = None
 
     def animate(self, t):
