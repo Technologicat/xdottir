@@ -18,6 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Big thanks to IOhannes m zmölnig for converting his fork to Gtk 3, which helped a lot in
+# getting this fork working again.
+# https://git.iem.at/zmoelnig/dotterel/blob/master/dotterel.py
+
 '''Visualize dot graphs via the xdot format.'''
 
 # About these fields:
@@ -25,7 +29,7 @@
 __author__ = "Jose Fonseca and Juha Jeronen"
 __copyright__ = "Copyright 2008-2012 Jose Fonseca and XDot contributors."
 # Note: when updating this, see set_authors() for AboutDialog, too
-__credits__ = ["Jose Fonseca", "Marius Gedminas", "Jaap Karssenberg", "michael.hliao", "Robert Meerman", "lodatom", "sk", "Alberto Rodriguez", "djs52uk", "Juha Jeronen"]
+__credits__ = ["Jose Fonseca", "Marius Gedminas", "Jaap Karssenberg", "michael.hliao", "Robert Meerman", "lodatom", "sk", "Alberto Rodriguez", "djs52uk", "Juha Jeronen", "IOhannes m zmölnig"]
 __license__ = "LGPL v3"
 __version__ = "1.0"
 __status__ = "Production"
@@ -57,17 +61,16 @@ import re
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('PangoCairo', '1.0')
+
 from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
-keysyms = gdk  # FIXME: refactor the actual code
 from gi.repository import GdkPixbuf
 from functools import reduce
 from gi.repository import GObject as gobject
 from gi.repository import GLib
-from gi.repository import cairo
-import pangocffi as pango
+from gi.repository import Pango as pango
 from gi.repository import PangoCairo as pangocairo
-
+import cairo
 
 # See http://www.graphviz.org/pub/scm/graphviz-cairo/plugin/cairo/gvrender_cairo.c
 
@@ -340,7 +343,7 @@ class TextShape(Shape):
         try:
             layout = self.layout
         except AttributeError:
-            layout = cr.create_layout()
+            layout = pangocairo.create_layout(cr)
 
             # set font options
             # see http://lists.freedesktop.org/archives/cairo/2007-February/009688.html
@@ -368,7 +371,7 @@ class TextShape(Shape):
             # cache it
             self.layout = layout
         else:
-            cr.update_layout(layout)
+            pangocairo.update_layout(cr, layout)
 
         descent = 2 # XXX get descender from font metrics
 
@@ -402,7 +405,7 @@ class TextShape(Shape):
         cr.save()
         cr.scale(f, f)
         cr.set_source_rgba(*self.select_pen(highlight, old_highlight).color)
-        cr.show_layout(layout)
+        pangocairo.show_layout(cr, layout)
         cr.restore()
 
         if 0: # DEBUG
@@ -892,7 +895,7 @@ class XDotAttrParser:
             b = b*s
             a = 1.0
             return r, g, b, a
-                
+
         sys.stderr.write("unknown color '%s'\n" % c)
         return None
 
@@ -960,11 +963,12 @@ class XDotAttrParser:
                 path = s.read_text()
                 self.handle_image(x0, y0, w, h, path)
             else:
-                sys.stderr.write("unknown xdot opcode '%s'\n" % op)
+                if op:  # empty opcode does nothing, is ok (maybe FIXME)
+                    sys.stderr.write("unknown xdot opcode '%s'\n" % op)
                 break
 
         return self.shapes
-    
+
     def transform(self, x, y):
         return self.parser.transform(x, y)
 
@@ -1534,7 +1538,7 @@ class Animation(object):
         self.dot_widget.animation = NoAnimation(self.dot_widget)
         self.t = 1.0
         if self.timeout_id is not None:
-            gobject.source_remove(self.timeout_id)
+            GLib.source_remove(self.timeout_id)
             self.timeout_id = None
 
     def tick(self):
@@ -1622,7 +1626,7 @@ class ExpDecayAnimation(Animation):
         #
         self.t = 1.0
         if self.timeout_id is not None:
-            gobject.source_remove(self.timeout_id)
+            GLib.source_remove(self.timeout_id)
             self.timeout_id = None
 
     def animate(self, t):
@@ -1796,7 +1800,7 @@ class DragAction(object):
 
     def on_motion_notify(self, event):
         if event.is_hint:
-            x, y, state = event.window.get_pointer()
+            window, x, y, state = event.window.get_device_position(event.device)
         else:
             x, y, state = event.x, event.y, event.state
         deltax = self.prevmousex - x
@@ -1830,7 +1834,7 @@ class NullAction(DragAction):
 
     def on_motion_notify(self, event):
         if event.is_hint:
-            x, y, state = event.window.get_pointer()
+            window, x, y, state = event.window.get_device_position(event.device)
         else:
             x, y, state = event.x, event.y, event.state
         dot_widget = self.dot_widget
@@ -1852,20 +1856,21 @@ class NullAction(DragAction):
             #
             do_highlight = None
             state = event.state
-            if state & gdk.SHIFT_MASK:
+            modifiers = gtk.accelerator_get_default_mod_mask()
+            if state & modifiers == gdk.ModifierType.SHIFT_MASK:
                 do_highlight = "from"
-            elif state & gdk.CONTROL_MASK:
+            elif state & modifiers == gdk.ModifierType.CONTROL_MASK:
                 do_highlight = "to"
-            elif state & gdk.MOD1_MASK  or  state & gdk.MOD5_MASK:  # Alt or AltGr
+            elif state & modifiers == gdk.ModifierType.MOD1_MASK or state & modifiers == gdk.ModifierType.MOD5_MASK:  # Alt or AltGr
                 do_highlight = "to_links_only"
 
             item = dot_widget.get_jump(x, y, highlight_linked_nodes=do_highlight)
         if item is not None:
-            dot_widget.window.set_cursor(gdk.Cursor(gdk.HAND2))
+            dot_widget.get_window().set_cursor(gdk.Cursor(gdk.CursorType.HAND2))
             dot_widget.set_highlight(item.highlight)
         else:
-#            dot_widget.window.set_cursor(gdk.Cursor(gdk.ARROW))
-            dot_widget.window.set_cursor(None)  # inherit cursor from parent window!
+#            dot_widget.get_window().set_cursor(gdk.Cursor(gdk.CursorType.ARROW))
+            dot_widget.get_window().set_cursor(None)  # inherit cursor from parent window!
             dot_widget.set_highlight(None)
 
 
@@ -1941,7 +1946,7 @@ class DotWidget(gtk.DrawingArea):
     """PyGTK widget that draws dot graphs."""
 
     __gsignals__ = {
-        'draw': 'override',
+#        'draw': 'override',
         'clicked' : (gobject.SignalFlags.RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gdk.Event))
     }
 
@@ -1968,6 +1973,8 @@ class DotWidget(gtk.DrawingArea):
         self.update_disabled = False
 
         self.set_property("can-focus", True)
+
+        self.connect("draw", self.on_draw)  # FIXME: __gsignals__ draw override and do_draw, or connect event and on_draw? What's the difference?
 
         self.add_events(gdk.EventMask.BUTTON_PRESS_MASK | gdk.EventMask.BUTTON_RELEASE_MASK)
         self.connect("button-press-event", self.on_area_button_press)
@@ -2220,13 +2227,14 @@ class DotWidget(gtk.DrawingArea):
 
     # TODO: update to GTK 3, which uses a draw signal instead of expose-event signal
     # https://developer.gnome.org/gtk3/stable/ch26s02.html
-    def do_draw(self, widget, context):
+    def on_draw(self, widget, context):
         # set a clip region for the expose event
-        context.rectangle(
-            event.area.x, event.area.y,
-            event.area.width, event.area.height
-        )
-        context.clip()
+        # FIXME
+        # context.rectangle(
+        #     event.area.x, event.area.y,
+        #     event.area.width, event.area.height
+        # )
+        # context.clip()
 
         context.set_source_rgba(1.0, 1.0, 1.0, 1.0)
         context.paint()
@@ -2392,7 +2400,7 @@ class DotWidget(gtk.DrawingArea):
     POS_INCREMENT = 100
 
     def on_key_press_event(self, widget, event):
-        if event.keyval == keysyms.Left:
+        if event.keyval == gdk.keyval_from_name("Left"):
             target_x = self.target_x - self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 # Must disable extra zoom (out-and-back-in); not doing that
@@ -2408,7 +2416,7 @@ class DotWidget(gtk.DrawingArea):
                 self.target_x = target_x
             self.queue_draw()
             return True
-        if event.keyval == keysyms.Right:
+        if event.keyval == gdk.keyval_from_name("Right"):
             target_x = self.target_x + self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 self.animate_to(target_x, self.y, allow_extra_zoom=False)
@@ -2417,7 +2425,7 @@ class DotWidget(gtk.DrawingArea):
                 self.target_x = target_x
             self.queue_draw()
             return True
-        if event.keyval == keysyms.Up:
+        if event.keyval == gdk.keyval_from_name("Up"):
             target_y = self.target_y - self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 self.animate_to(self.x, target_y, allow_extra_zoom=False)
@@ -2426,7 +2434,7 @@ class DotWidget(gtk.DrawingArea):
                 self.target_y = target_y
             self.queue_draw()
             return True
-        if event.keyval == keysyms.Down:
+        if event.keyval == gdk.keyval_from_name("Down"):
             target_y = self.target_y + self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 self.animate_to(self.x, target_y, allow_extra_zoom=False)
@@ -2435,34 +2443,34 @@ class DotWidget(gtk.DrawingArea):
                 self.target_y = target_y
             self.queue_draw()
             return True
-        if event.keyval in (keysyms.Page_Up,
-                            keysyms.plus,
-                            keysyms.equal,
-                            keysyms.KP_Add):
+        if event.keyval in (gdk.keyval_from_name("Page_Up"),
+                            gdk.keyval_from_name("plus"),
+                            gdk.keyval_from_name("equal"),
+                            gdk.keyval_from_name("KP_Add")):
             self.zoom_in()
             self.queue_draw()
             return True
-        if event.keyval in (keysyms.Page_Down,
-                            keysyms.minus,
-                            keysyms.KP_Subtract):
+        if event.keyval in (gdk.keyval_from_name("Page_Down"),
+                            gdk.keyval_from_name("minus"),
+                            gdk.keyval_from_name("KP_Subtract")):
             self.zoom_out()
             self.queue_draw()
             return True
-        if event.keyval == keysyms.Escape:
+        if event.keyval == gdk.keyval_from_name("Escape"):
             self.drag_action.abort()
             self.drag_action = NullAction(self)
             return True
-        if event.keyval == keysyms.r:
+        if event.keyval == gdk.keyval_from_name("r"):
             self.reload()
             return True
-        if event.keyval == keysyms.f:
+        if event.keyval == gdk.keyval_from_name("f"):
             self.zoom_to_fit()
             return True
-        if event.keyval in (keysyms.KP_1,
-                            keysyms._1):
+        if event.keyval in (gdk.keyval_from_name("KP_1"),
+                            gdk.keyval_from_name("_1")):  # FIXME 1 or _1?
             self.zoom_image(1.0)
             return True
-        if event.keyval == keysyms.q:
+        if event.keyval == gdk.keyval_from_name("q"):
             gtk.main_quit()
             return True
 
@@ -2495,10 +2503,10 @@ class DotWidget(gtk.DrawingArea):
         #
         # (ISO level 3 shift = AltGr in scandinavic keyboards.)
         #
-        if event.keyval not in [ keysyms.Shift_L,   keysyms.Shift_R,
-                                 keysyms.Control_L, keysyms.Control_R,
-                                 keysyms.Alt_L,     keysyms.Alt_R,
-                                 keysyms.ISO_Level3_Shift ]:
+        if event.keyval not in [ gdk.keyval_from_name("Shift_L"),   gdk.keyval_from_name("Shift_R"),
+                                 gdk.keyval_from_name("Control_L"), gdk.keyval_from_name("Control_R"),
+                                 gdk.keyval_from_name("Alt_L"),     gdk.keyval_from_name("Alt_R"),
+                                 gdk.keyval_from_name("ISO_Level3_Shift") ]:
             return
 
         # Given shift/ctrl state, updates the highlight set.
@@ -2511,9 +2519,9 @@ class DotWidget(gtk.DrawingArea):
         #
         do_highlight = None
         if mode == "press":
-            if event.keyval == keysyms.Shift_L  or  event.keyval == keysyms.Shift_R:
+            if event.keyval == gdk.keyval_from_name("Shift_L")  or  event.keyval == gdk.keyval_from_name("Shift_R"):
                 do_highlight = "from"
-            elif event.keyval == keysyms.Control_L  or  event.keyval == keysyms.Control_R:
+            elif event.keyval == gdk.keyval_from_name("Control_L")  or  event.keyval == gdk.keyval_from_name("Control_R"):
                 do_highlight = "to"
             else: # alt
                 do_highlight = "to_links_only"
@@ -2527,9 +2535,10 @@ class DotWidget(gtk.DrawingArea):
     def get_drag_action(self, event):
         state = event.state
         if event.button in (1, 2): # left or middle button
-            if state & gdk.CONTROL_MASK:
+            modifiers = gtk.accelerator_get_default_mod_mask()
+            if state & modifiers == gdk.ModifierType.CONTROL_MASK:
                 return ZoomAction
-            elif state & gdk.SHIFT_MASK:
+            elif state & modifiers == gdk.ModifierType.SHIFT_MASK:
                 return ZoomAreaAction
             else:
                 return PanAction
@@ -2992,30 +3001,32 @@ class DotWindow(gtk.Window):
             self.button_find_go.set_sensitive(True)
 
     def on_key_press_event(self, widget, event):
-        if event.state & gdk.CONTROL_MASK  and  event.keyval == keysyms.o:
-            self.on_open(None)
-            return True
-        if event.state & gdk.CONTROL_MASK  and  event.keyval == keysyms.f:
-            if self.find_displaying_placeholder:
-                self.prepare_find_field()
-            self.find_entry.grab_focus()
-            return True
-        if event.state & gdk.CONTROL_MASK  and  event.keyval == keysyms.i:
-            self.combobox.grab_focus()
-            return True
+        modifiers = gtk.accelerator_get_default_mod_mask()
+        if event.state & modifiers == gdk.ModifierType.CONTROL_MASK:
+            if event.keyval == gdk.keyval_from_name("o"):
+                self.on_open(None)
+                return True
+            if event.keyval == gdk.keyval_from_name("f"):
+                if self.find_displaying_placeholder:
+                    self.prepare_find_field()
+                self.find_entry.grab_focus()
+                return True
+            if event.keyval == gdk.keyval_from_name("i"):
+                self.combobox.grab_focus()
+                return True
 
         # Focus events and is_focus() don't seem to work with ComboBox at least
         # in Debian Stable.
         #
         if self.combobox.is_focus():
-            if event.keyval in [ keysyms.Return, keysyms.KP_Enter, keysyms.Escape ]:
+            if event.keyval in [ gdk.keyval_from_name("Return"), gdk.keyval_from_name("KP_Enter"), gdk.keyval_from_name("Escape") ]:
                 self.dot_widget.grab_focus()
                 return True
 
 #        print gdk.keyval_name(event.keyval), event.state
 
         if self.find_entry.is_focus():
-            if event.keyval == keysyms.Escape:
+            if event.keyval == gdk.keyval_from_name("Escape"):
 #                # XXX usability TEST
 #                #
 #                # Escape:
@@ -3037,20 +3048,20 @@ class DotWindow(gtk.Window):
                 self.dot_widget.grab_focus()
 
                 return True
-            elif event.keyval == keysyms.Return  or  event.keyval == keysyms.KP_Enter:
+            elif event.keyval == gdk.keyval_from_name("Return")  or  event.keyval == gdk.keyval_from_name("KP_Enter"):
                 self.dot_widget.grab_focus()
                 if not self.incremental_find:
                     self.find_and_highlight_matches()  # run the search now
                 self.find_first()
                 return True
         else:
-            if event.keyval == keysyms.Return  or  event.keyval == keysyms.KP_Enter:
+            if event.keyval == gdk.keyval_from_name("Return")  or  event.keyval == gdk.keyval_from_name("KP_Enter"):
                 self.find_first()
                 return True
-            if event.keyval == keysyms.n:
+            if event.keyval == gdk.keyval_from_name("n"):
                 self.find_next()
                 return True
-            if event.keyval == keysyms.N:
+            if event.keyval == gdk.keyval_from_name("N"):
                 self.find_prev()
                 return True
 
@@ -3060,7 +3071,7 @@ class DotWindow(gtk.Window):
         # Run incremental Find on key release in the Find field.
         #
         if self.find_entry.is_focus():
-            if event.keyval in [ keysyms.Escape, keysyms.Return, keysyms.KP_Enter ]:
+            if event.keyval in [ gdk.keyval_from_name("Escape"), gdk.keyval_from_name("Return"), gdk.keyval_from_name("KP_Enter") ]:
                 return False
             # Ignore the Ctrl+F that gets us here (and other Ctrl+something key combinations).
             #
@@ -3070,7 +3081,8 @@ class DotWindow(gtk.Window):
             # the "F" generates a separate release event with no CONTROL_MASK. What to do then?
             #
 #            print gdk.keyval_name(event.keyval)   # DEBUG
-            if event.state & gdk.CONTROL_MASK  and  event.keyval != keysyms.BackSpace:
+            modifiers = gtk.accelerator_get_default_mod_mask()
+            if event.state & modifiers == gdk.ModifierType.CONTROL_MASK and event.keyval != gdk.keyval_from_name("BackSpace"):
                 return False
             if self.find_displaying_placeholder:
                 return False
