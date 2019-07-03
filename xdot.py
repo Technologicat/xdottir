@@ -182,7 +182,7 @@ class Pen:
         self.fillcolor = (0.0, 0.0, 0.0, 1.0)
         self.linewidth = 1.0
         self.fontsize = 14.0
-        self.fontname = "Times-Roman"
+        self.fontname = "Times-Roman"  # FIXME: seems to have no effect even if we choose some other font?
         self.dash = ()
 
     def copy(self):
@@ -354,7 +354,7 @@ class TextShape(Shape):
             # see http://lists.freedesktop.org/archives/cairo/2007-February/009688.html
             context = layout.get_context()
             fo = cairo.FontOptions()
-            fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
+            fo.set_antialias(cairo.ANTIALIAS_BEST)
             fo.set_hint_style(cairo.HINT_STYLE_NONE)
             fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
             try:
@@ -366,7 +366,7 @@ class TextShape(Shape):
 
             # set font
             font = pango.FontDescription()
-            font.set_family(self.pen.fontname)
+            font.set_family(self.pen.fontname)  # setting a family here does seem to work. (cf. Times-Roman above, which doesn't)
             font.set_absolute_size(self.pen.fontsize*pango.SCALE)
             layout.set_font_description(font)
 
@@ -378,11 +378,23 @@ class TextShape(Shape):
         else:
             pangocairo.update_layout(cr, layout)
 
-        descent = 2 # XXX get descender from font metrics
+        descent = 2 # XXX get descender from font metrics (maybe pango_layout_get_baseline would help?)
 
-        width, height = layout.get_size()
-        width = float(width)/pango.SCALE
-        height = float(height)/pango.SCALE
+        # TODO: Is there an actual situation where Pango uses logical_rect
+        # TODO: instead of ink_rect to specify the origin offset, as the
+        # TODO: documentation hints there just might sometimes be?
+        # https://developer.gnome.org/pango/stable/pango-Layout-Objects.html#pango-layout-get-extents
+        exts = layout.get_extents()
+        originx = exts.ink_rect.x / pango.SCALE
+        originy = exts.ink_rect.y / pango.SCALE
+        width = exts.logical_rect.width / pango.SCALE
+        height = exts.logical_rect.height / pango.SCALE
+
+        if 0:  # DEBUG
+            inkr = [float(getattr(exts.ink_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
+            logr = [float(getattr(exts.logical_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
+            print(self.x, self.y, width, height, inkr, logr)
+
         # we know the width that dot thinks this text should have
         # we do not necessarily have a font with the same metrics
         # scale it so that the text fits inside its box
@@ -403,7 +415,17 @@ class TextShape(Shape):
         else:
             assert 0
 
-        y = self.y - height + descent
+        # Figure out height of one line
+        first_line = layout.get_line_readonly(0)
+        line_exts = first_line.get_extents()
+        if 0:  # DEBUG
+            inkr = [float(getattr(line_exts.ink_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
+            logr = [float(getattr(line_exts.logical_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
+            print(inkr, logr)
+        line_height = line_exts.ink_rect.height / pango.SCALE
+
+        x -= originx
+        y = self.y - originy - line_height + descent
 
         cr.move_to(x, y)
 
