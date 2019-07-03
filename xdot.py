@@ -54,13 +54,19 @@ import colorsys
 import time
 import re
 
-import gobject
-import gtk
-import gtk.gdk
-import gtk.keysyms
-import cairo
-import pango
-import pangocairo
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('PangoCairo', '1.0')
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+keysyms = gdk  # FIXME: refactor the actual code
+from gi.repository import GdkPixbuf
+from functools import reduce
+from gi.repository import GObject as gobject
+from gi.repository import GLib
+from gi.repository import cairo
+import pangocffi as pango
+from gi.repository import PangoCairo as pangocairo
 
 
 # See http://www.graphviz.org/pub/scm/graphviz-cairo/plugin/cairo/gvrender_cairo.c
@@ -148,11 +154,11 @@ def setup_highlight_color(gtkobject):
             color_base  = style_base[state]
             color_light = style_light[state]
         except AttributeError:
-            print >>sys.stderr, "xdot: WARNING: unable to get system highlight color; using default blue."
+            print("xdot: WARNING: unable to get system highlight color; using default blue.", file=sys.stderr)
 
             # This default is extracted from GNOME 2.30.2 in Debian Stable, August 2012.
-            color_base  = gtk.gdk.Color(34438, 43947, 55769)
-            color_light = gtk.gdk.Color(53951, 58126, 63317)
+            color_base  = gdk.Color(34438, 43947, 55769)
+            color_light = gdk.Color(53951, 58126, 63317)
 
         alp = 1.0  # translucency (1.0 = opaque)
         highlight_base = (color_base.red/65535.0, color_base.green/65535.0, color_base.blue/65535.0, alp)
@@ -425,8 +431,8 @@ class ImageShape(Shape):
         self.path = path
 
     def draw(self, cr, highlight=False):
-        cr2 = gtk.gdk.CairoContext(cr)
-        pixbuf = gtk.gdk.pixbuf_new_from_file(self.path)
+        cr2 = gdk.CairoContext(cr)
+        pixbuf = gdk.pixbuf_new_from_file(self.path)
         sx = float(self.w)/float(pixbuf.get_width())
         sy = float(self.h)/float(pixbuf.get_height())
         cr.save()
@@ -522,7 +528,7 @@ class BezierShape(Shape):
     def draw(self, cr, highlight=False, old_highlight=False):
         x0, y0 = self.points[0]
         cr.move_to(x0, y0)
-        for i in xrange(1, len(self.points), 3):
+        for i in range(1, len(self.points), 3):
             x1, y1 = self.points[i]
             x2, y2 = self.points[i + 1]
             x3, y3 = self.points[i + 2]
@@ -670,8 +676,8 @@ class Graph(Shape):
         # the graph (any given, particular graph) is loaded.
         #
         # format: (node_obj, list_of_text_strings_in_node)
-        self.items_and_texts =       map( lambda obj: (obj, obj.get_texts()), self.nodes )
-        self.items_and_texts.extend( map( lambda obj: (obj, obj.get_texts()), self.edges ) )
+        self.items_and_texts =       list(map( lambda obj: (obj, obj.get_texts()), self.nodes ))
+        self.items_and_texts.extend( list(map( lambda obj: (obj, obj.get_texts()), self.edges )) )
 
         self.nodes_by_name = {}
         for n in self.nodes:
@@ -863,7 +869,7 @@ class XDotAttrParser:
 
     def lookup_color(self, c):
         try:
-            color = gtk.gdk.color_parse(c)
+            color = gdk.color_parse(c)
         except ValueError:
             pass
         else:
@@ -1522,7 +1528,7 @@ class Animation(object):
         self.t = 0.0
 
     def start(self):
-        self.timeout_id = gobject.timeout_add(int(self.step * 1000), self.tick)
+        self.timeout_id = GLib.timeout_add(int(self.step * 1000), self.tick)
 
     def stop(self):
         self.dot_widget.animation = NoAnimation(self.dot_widget)
@@ -1846,19 +1852,19 @@ class NullAction(DragAction):
             #
             do_highlight = None
             state = event.state
-            if state & gtk.gdk.SHIFT_MASK:
+            if state & gdk.SHIFT_MASK:
                 do_highlight = "from"
-            elif state & gtk.gdk.CONTROL_MASK:
+            elif state & gdk.CONTROL_MASK:
                 do_highlight = "to"
-            elif state & gtk.gdk.MOD1_MASK  or  state & gtk.gdk.MOD5_MASK:  # Alt or AltGr
+            elif state & gdk.MOD1_MASK  or  state & gdk.MOD5_MASK:  # Alt or AltGr
                 do_highlight = "to_links_only"
 
             item = dot_widget.get_jump(x, y, highlight_linked_nodes=do_highlight)
         if item is not None:
-            dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+            dot_widget.window.set_cursor(gdk.Cursor(gdk.HAND2))
             dot_widget.set_highlight(item.highlight)
         else:
-#            dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
+#            dot_widget.window.set_cursor(gdk.Cursor(gdk.ARROW))
             dot_widget.window.set_cursor(None)  # inherit cursor from parent window!
             dot_widget.set_highlight(None)
 
@@ -1866,7 +1872,7 @@ class NullAction(DragAction):
 class PanAction(DragAction):
 
     def start(self):
-        self.dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.FLEUR))
+        self.dot_widget.window.set_cursor(gdk.Cursor(gdk.FLEUR))
 
     def drag(self, deltax, deltay):
         self.dot_widget.x += deltax / self.dot_widget.zoom_ratio
@@ -1874,7 +1880,7 @@ class PanAction(DragAction):
         self.dot_widget.queue_draw()
 
     def stop(self):
-#        self.dot_widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.ARROW))
+#        self.dot_widget.window.set_cursor(gdk.Cursor(gdk.ARROW))
         self.dot_widget.window.set_cursor(None)  # inherit cursor from parent window!
 
     abort = stop
@@ -1935,8 +1941,8 @@ class DotWidget(gtk.DrawingArea):
     """PyGTK widget that draws dot graphs."""
 
     __gsignals__ = {
-        'expose-event': 'override',
-        'clicked' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gtk.gdk.Event))
+        'draw': 'override',
+        'clicked' : (gobject.SignalFlags.RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gdk.Event))
     }
 
     global __default_filter__
@@ -1961,12 +1967,12 @@ class DotWidget(gtk.DrawingArea):
         #
         self.update_disabled = False
 
-        self.set_flags(gtk.CAN_FOCUS)
+        self.set_property("can-focus", True)
 
-        self.add_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+        self.add_events(gdk.EventMask.BUTTON_PRESS_MASK | gdk.EventMask.BUTTON_RELEASE_MASK)
         self.connect("button-press-event", self.on_area_button_press)
         self.connect("button-release-event", self.on_area_button_release)
-        self.add_events(gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.POINTER_MOTION_HINT_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+        self.add_events(gdk.EventMask.POINTER_MOTION_MASK | gdk.EventMask.POINTER_MOTION_HINT_MASK | gdk.EventMask.BUTTON_RELEASE_MASK)
         self.connect("motion-notify-event", self.on_area_motion_notify)
         self.connect("scroll-event", self.on_area_scroll_event)
         self.connect("size-allocate", self.on_area_size_allocate)
@@ -1975,7 +1981,7 @@ class DotWidget(gtk.DrawingArea):
         self.connect('key-release-event', self.on_key_release_event)
         self.last_mtime = None
 
-        gobject.timeout_add(1000, self.update)
+        GLib.timeout_add(1000, self.update)
 
         self.x, self.y = 0.0, 0.0
         self.target_x, self.target_y = 0.0, 0.0  # values at end of current animation, if any
@@ -2036,7 +2042,7 @@ class DotWidget(gtk.DrawingArea):
                 plural_s = "s" if n_excess != 1 else ""
 
                 pos = error.find('\n')
-                for j in xrange(max_lines-1):
+                for j in range(max_lines-1):
                     pos = error.find('\n', pos+1)
                 error = error[0:pos]  # max_lines lines, without last linefeed
                 error += "\n... <%d more line%s> ...\n\nLong error message truncated. Run in terminal to capture full output." % (n_excess, plural_s)
@@ -2071,8 +2077,6 @@ class DotWidget(gtk.DrawingArea):
 
     def set_dotcode(self, dotcode, filename=None, zoom_to_fit=True):
         self.openfilename = None
-        if isinstance(dotcode, unicode):
-            dotcode = dotcode.encode('utf8')
         if self.filter is not None  and  filename is not None:
             self.set_graph_from_message("[Running layout filter '%s' on '%s'...]" % (self.filter, os.path.basename(filename)))
             while gtk.events_pending():
@@ -2082,7 +2086,7 @@ class DotWidget(gtk.DrawingArea):
             return False
         try:
             self.set_xdotcode(xdotcode, filename, zoom_to_fit)
-        except ParseError, ex:
+        except ParseError as ex:
             self.set_graph_from_message("[No graph loaded]")
             dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                        message_format=str(ex),
@@ -2161,19 +2165,16 @@ class DotWidget(gtk.DrawingArea):
 
                 # Change cursor to "busy" and force-redraw the window
                 self.reset_mouse_cursor()
-                self.parent.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+                self.parent.window.set_cursor(gdk.Cursor(gdk.WATCH))
                 while gtk.events_pending():
                     gtk.main_iteration_do(True)
 
-                fp = file(self.openfilename, 'rt')
-
-                # XXX HACK: always load xdot files without filter; otherwise use specified filter
-                if os.path.splitext(self.openfilename)[1] == ".xdot":
-                    self.set_xdotcode(fp.read(), self.openfilename, zoom_to_fit=False)
-                else:
-                    self.set_dotcode(fp.read(), self.openfilename, zoom_to_fit=False)
-
-                fp.close()
+                with open(self.openfilename, 'rt') as fp:
+                    # XXX HACK: always load xdot files without filter; otherwise use specified filter
+                    if os.path.splitext(self.openfilename)[1] == ".xdot":
+                        self.set_xdotcode(fp.read(), self.openfilename, zoom_to_fit=False)
+                    else:
+                        self.set_dotcode(fp.read(), self.openfilename, zoom_to_fit=False)
 
                 # Change cursor back and redraw (now with the actual reloaded graph).
                 self.parent.window.set_cursor(None)  # inherit cursor from parent window!
@@ -2217,30 +2218,30 @@ class DotWidget(gtk.DrawingArea):
                 self.reload()
         return True
 
-    def do_expose_event(self, event):
-        cr = self.window.cairo_create()
-
+    # TODO: update to GTK 3, which uses a draw signal instead of expose-event signal
+    # https://developer.gnome.org/gtk3/stable/ch26s02.html
+    def do_draw(self, widget, context):
         # set a clip region for the expose event
-        cr.rectangle(
+        context.rectangle(
             event.area.x, event.area.y,
             event.area.width, event.area.height
         )
-        cr.clip()
+        context.clip()
 
-        cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-        cr.paint()
+        context.set_source_rgba(1.0, 1.0, 1.0, 1.0)
+        context.paint()
 
-        cr.save()
+        context.save()
         rect = self.get_allocation()
-        cr.translate(0.5*rect.width, 0.5*rect.height)
-        cr.scale(self.zoom_ratio, self.zoom_ratio)
-        cr.translate(-self.x, -self.y)
+        context.translate(0.5*rect.width, 0.5*rect.height)
+        context.scale(self.zoom_ratio, self.zoom_ratio)
+        context.translate(-self.x, -self.y)
 
-        self.graph.draw(cr, highlight_items=self.highlight,
+        self.graph.draw(context, highlight_items=self.highlight,
                             old_highlight_items=self.old_highlight)
-        cr.restore()
+        context.restore()
 
-        self.drag_action.draw(cr)
+        self.drag_action.draw(context)
 
         # HACK: Query the system highlight color.
         #
@@ -2391,7 +2392,7 @@ class DotWidget(gtk.DrawingArea):
     POS_INCREMENT = 100
 
     def on_key_press_event(self, widget, event):
-        if event.keyval == gtk.keysyms.Left:
+        if event.keyval == keysyms.Left:
             target_x = self.target_x - self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 # Must disable extra zoom (out-and-back-in); not doing that
@@ -2407,7 +2408,7 @@ class DotWidget(gtk.DrawingArea):
                 self.target_x = target_x
             self.queue_draw()
             return True
-        if event.keyval == gtk.keysyms.Right:
+        if event.keyval == keysyms.Right:
             target_x = self.target_x + self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 self.animate_to(target_x, self.y, allow_extra_zoom=False)
@@ -2416,7 +2417,7 @@ class DotWidget(gtk.DrawingArea):
                 self.target_x = target_x
             self.queue_draw()
             return True
-        if event.keyval == gtk.keysyms.Up:
+        if event.keyval == keysyms.Up:
             target_y = self.target_y - self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 self.animate_to(self.x, target_y, allow_extra_zoom=False)
@@ -2425,7 +2426,7 @@ class DotWidget(gtk.DrawingArea):
                 self.target_y = target_y
             self.queue_draw()
             return True
-        if event.keyval == gtk.keysyms.Down:
+        if event.keyval == keysyms.Down:
             target_y = self.target_y + self.POS_INCREMENT/self.zoom_ratio
             if self.animate:
                 self.animate_to(self.x, target_y, allow_extra_zoom=False)
@@ -2434,34 +2435,34 @@ class DotWidget(gtk.DrawingArea):
                 self.target_y = target_y
             self.queue_draw()
             return True
-        if event.keyval in (gtk.keysyms.Page_Up,
-                            gtk.keysyms.plus,
-                            gtk.keysyms.equal,
-                            gtk.keysyms.KP_Add):
+        if event.keyval in (keysyms.Page_Up,
+                            keysyms.plus,
+                            keysyms.equal,
+                            keysyms.KP_Add):
             self.zoom_in()
             self.queue_draw()
             return True
-        if event.keyval in (gtk.keysyms.Page_Down,
-                            gtk.keysyms.minus,
-                            gtk.keysyms.KP_Subtract):
+        if event.keyval in (keysyms.Page_Down,
+                            keysyms.minus,
+                            keysyms.KP_Subtract):
             self.zoom_out()
             self.queue_draw()
             return True
-        if event.keyval == gtk.keysyms.Escape:
+        if event.keyval == keysyms.Escape:
             self.drag_action.abort()
             self.drag_action = NullAction(self)
             return True
-        if event.keyval == gtk.keysyms.r:
+        if event.keyval == keysyms.r:
             self.reload()
             return True
-        if event.keyval == gtk.keysyms.f:
+        if event.keyval == keysyms.f:
             self.zoom_to_fit()
             return True
-        if event.keyval in (gtk.keysyms.KP_1,
-                            gtk.keysyms._1):
+        if event.keyval in (keysyms.KP_1,
+                            keysyms._1):
             self.zoom_image(1.0)
             return True
-        if event.keyval == gtk.keysyms.q:
+        if event.keyval == keysyms.q:
             gtk.main_quit()
             return True
 
@@ -2469,14 +2470,14 @@ class DotWidget(gtk.DrawingArea):
         # we must update it now.
         #
         self.update_highlight(event, mode="press")
-#        print gtk.gdk.keyval_name(event.keyval)   # DEBUG
+#        print gdk.keyval_name(event.keyval)   # DEBUG
 
         return False
 
     def on_key_release_event(self, widget, event):
         # WTF? In Ubuntu 12.04 LTS, GTK seems to be very lazy in sending key release events
         # for pure modifiers. A release may take several seconds to register...
-#        print gtk.gdk.keyval_name(event.keyval)   # DEBUG
+#        print gdk.keyval_name(event.keyval)   # DEBUG
 
         # Releasing modifiers may change the highlight set.
         self.update_highlight(event, mode="release")
@@ -2494,10 +2495,10 @@ class DotWidget(gtk.DrawingArea):
         #
         # (ISO level 3 shift = AltGr in scandinavic keyboards.)
         #
-        if event.keyval not in [ gtk.keysyms.Shift_L,   gtk.keysyms.Shift_R,
-                                 gtk.keysyms.Control_L, gtk.keysyms.Control_R,
-                                 gtk.keysyms.Alt_L,     gtk.keysyms.Alt_R,
-                                 gtk.keysyms.ISO_Level3_Shift ]:
+        if event.keyval not in [ keysyms.Shift_L,   keysyms.Shift_R,
+                                 keysyms.Control_L, keysyms.Control_R,
+                                 keysyms.Alt_L,     keysyms.Alt_R,
+                                 keysyms.ISO_Level3_Shift ]:
             return
 
         # Given shift/ctrl state, updates the highlight set.
@@ -2510,9 +2511,9 @@ class DotWidget(gtk.DrawingArea):
         #
         do_highlight = None
         if mode == "press":
-            if event.keyval == gtk.keysyms.Shift_L  or  event.keyval == gtk.keysyms.Shift_R:
+            if event.keyval == keysyms.Shift_L  or  event.keyval == keysyms.Shift_R:
                 do_highlight = "from"
-            elif event.keyval == gtk.keysyms.Control_L  or  event.keyval == gtk.keysyms.Control_R:
+            elif event.keyval == keysyms.Control_L  or  event.keyval == keysyms.Control_R:
                 do_highlight = "to"
             else: # alt
                 do_highlight = "to_links_only"
@@ -2526,9 +2527,9 @@ class DotWidget(gtk.DrawingArea):
     def get_drag_action(self, event):
         state = event.state
         if event.button in (1, 2): # left or middle button
-            if state & gtk.gdk.CONTROL_MASK:
+            if state & gdk.CONTROL_MASK:
                 return ZoomAction
-            elif state & gtk.gdk.SHIFT_MASK:
+            elif state & gdk.SHIFT_MASK:
                 return ZoomAreaAction
             else:
                 return PanAction
@@ -2547,7 +2548,7 @@ class DotWidget(gtk.DrawingArea):
         return False
 
     def is_click(self, event, click_fuzz=4, click_timeout=1.0):
-        assert event.type == gtk.gdk.BUTTON_RELEASE
+        assert event.type == gdk.BUTTON_RELEASE
         if self.presstime is None:
             # got a button release without seeing the press?
             return False
@@ -2575,7 +2576,7 @@ class DotWidget(gtk.DrawingArea):
             x, y = int(event.x), int(event.y)
             url = self.get_url(x, y)
             if url is not None:
-                self.emit('clicked', unicode(url.url), event)
+                self.emit('clicked', url.url, event)  # XXX: this was unicode(url.url) in Python 2
             else:
                 jump = self.get_jump(x, y)  # no kwargs to pass in
                 if jump is not None:
@@ -2599,11 +2600,11 @@ class DotWidget(gtk.DrawingArea):
         if self.animate:
             inc *= 2.0
 
-        if event.direction == gtk.gdk.SCROLL_UP:
+        if event.direction == gdk.SCROLL_UP:
             self.zoom_image(self.zoom_ratio * inc,
                             pos=(event.x, event.y))
             return True
-        if event.direction == gtk.gdk.SCROLL_DOWN:
+        if event.direction == gdk.SCROLL_DOWN:
             self.zoom_image(self.zoom_ratio / inc,
                             pos=(event.x, event.y))
             return True
@@ -2732,8 +2733,8 @@ class DotWindow(gtk.Window):
         vbox = gtk.VBox()
         window.add(vbox)
 
-        self.widget = DotWidget()
-        self.widget.set_reload_callback( self.reload_callback )
+        self.dot_widget = DotWidget()
+        self.dot_widget.set_reload_callback( self.reload_callback )
 
         # Create a UIManager instance
         uimanager = self.uimanager = gtk.UIManager()
@@ -2743,7 +2744,7 @@ class DotWindow(gtk.Window):
         window.add_accel_group(accelgroup)
 
         # Create an ActionGroup
-        actiongroup = gtk.ActionGroup('Actions')
+        actiongroup = gtk.ActionGroup(name='Actions')
         self.actiongroup = actiongroup
 
         # Find: different behaviour:
@@ -2768,10 +2769,10 @@ class DotWindow(gtk.Window):
             # name, stock_id, label, accelerator, tooltip, callback_func
             ('Open', gtk.STOCK_OPEN, None, None, "Open [Ctrl+O]", self.on_open),
             ('Reload', gtk.STOCK_REFRESH, None, "R", "Reload [R]", self.on_reload),
-            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, "plus", "Zoom in [+]", self.widget.on_zoom_in),
-            ('ZoomOut', gtk.STOCK_ZOOM_OUT, "Zoom o_ut", "minus", "Zoom out [-]", self.widget.on_zoom_out),
-            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, "F", "Zoom to fit [F]", self.widget.on_zoom_fit),
-            ('Zoom100', gtk.STOCK_ZOOM_100, None, "1", "Zoom to 100% [1]", self.widget.on_zoom_100),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, "plus", "Zoom in [+]", self.dot_widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, "Zoom o_ut", "minus", "Zoom out [-]", self.dot_widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, "F", "Zoom to fit [F]", self.dot_widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None, "1", "Zoom to 100% [1]", self.dot_widget.on_zoom_100),
             ('FindClear', gtk.STOCK_CLOSE, "_Clear Find", "Escape", "Clear find term [Escape]", self.on_find_clear),
             ('FindGo', gtk.STOCK_FIND, findgo_label, "Return", findgo_tooltip, self.on_find_first),
             ('FindPrev', gtk.STOCK_GO_BACK, "Find _previous", "<Shift>N", "Jump to previous match [Shift+N]", self.on_find_prev),
@@ -2804,7 +2805,8 @@ class DotWindow(gtk.Window):
         def toolitemify(widget):
             item = gtk.ToolItem()
             item.add(widget)
-            item.set_size_request(*widget.size_request())
+            # FIXME may need to revisit this (in Gtk3, get_preferred_width, get_preferred_height)
+            # item.set_size_request(*widget.size_request())
             return item
 
         self.find_displaying_placeholder = True
@@ -2814,7 +2816,7 @@ class DotWindow(gtk.Window):
         self.old_zoom = None  # for view reset when clearing
         self.find_last_searched_text = ""
         self.find_entry = gtk.Entry()
-        self.find_entry.add_events(gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.POINTER_MOTION_HINT_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.FOCUS_CHANGE_MASK)
+        self.find_entry.add_events(gdk.EventMask.POINTER_MOTION_MASK | gdk.EventMask.POINTER_MOTION_HINT_MASK | gdk.EventMask.BUTTON_PRESS_MASK | gdk.EventMask.FOCUS_CHANGE_MASK)
         self.find_entry.connect("button-press-event", self.on_find_entry_button_press)
         self.find_entry.connect("focus-out-event", self.on_find_entry_focus_out)
         self.find_entry.connect("motion-notify-event", self.on_find_entry_motion_notify)
@@ -2828,28 +2830,34 @@ class DotWindow(gtk.Window):
 
         # Layout filter selector
         #
-        self.combobox = gtk.combo_box_new_text()
+        # https://python-gtk-3-tutorial.readthedocs.io/en/latest/combobox.html
+        filter_store = gtk.ListStore(str)
+        self.combobox_idx_by_name = {}
+        for i,f in enumerate(__filter_choices__):
+            filter_store.append([f])
+            self.combobox_idx_by_name[f] = i
+        self.combobox = gtk.ComboBox.new_with_model_and_entry(filter_store)
         self.combobox.connect( 'changed', self.on_filter_change )
         self.combobox.connect( 'key-press-event', self.on_key_press_event )
-        self.combobox_idx_by_name = {}
-        global __filter_choices__
-        for i,f in enumerate(__filter_choices__):
-            self.combobox.append_text( f )
-            self.combobox_idx_by_name[f] = i
+        self.combobox.set_entry_text_column(0)
+
         item = toolitemify(self.combobox)
         item.set_tooltip_text("Choose GraphViz filter for .dot files\n[Ctrl+I = Focus, Tab = De-focus]")
         toolbar.insert(item, 2)  # 2 = after Reload
 
-        vbox.pack_start(toolbar, False)
-        vbox.pack_start(self.widget)
-        self.set_focus(self.widget)
+        # child, expand, fill, padding
+        # https://python-gtk-3-tutorial.readthedocs.io/en/latest/layout.html
+        # https://lazka.github.io/pgi-docs/Gtk-3.0/classes/Box.html#Gtk.Box.pack_start
+        vbox.pack_start(toolbar, False, False, 0)
+        vbox.pack_start(self.dot_widget, True, True, 0)
+        self.set_focus(self.dot_widget)
         self.show_all()
 
     def on_help(self, action):
         self.set_xdotcode(__online_help_xdotcode__)
-        n = self.widget.graph.nodes_by_name["welcome"]
-        self.widget.zoom_to_fit_on_resize = False
-        self.widget.animate_to( n.x, n.y, 1.0 )
+        n = self.dot_widget.graph.nodes_by_name["welcome"]
+        self.dot_widget.zoom_to_fit_on_resize = False
+        self.dot_widget.animate_to( n.x, n.y, 1.0 )
 
     def on_about(self, action):
         # The default link opener doesn't seem to work (Ubuntu 12.04 LTS), so we use our own...
@@ -2890,11 +2898,11 @@ class DotWindow(gtk.Window):
 
 #        # how to set colors:
 #        # widget color
-#        entry.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FF0000"))
+#        entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#FF0000"))
 #        # frame color
-#        entry.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#0000FF"))
+#        entry.modify_bg(gtk.STATE_NORMAL, gdk.color_parse("#0000FF"))
 #        # text color
-#        entry.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("#00FF00"))
+#        entry.modify_text(gtk.STATE_NORMAL, gdk.color_parse("#00FF00"))
 
         # Disable the find buttons until the user enters something to find
         #
@@ -2913,9 +2921,9 @@ class DotWindow(gtk.Window):
         # The update_disabled check catches the case when a new file is being loaded;
         # in that case the old view position does not matter.
         #
-        if self.match_idx != -1  and  not self.widget.update_disabled:
-#            self.widget.zoom_to_fit()
-            self.widget.animate_to(self.old_xy[0], self.old_xy[1], self.old_zoom)
+        if self.match_idx != -1  and  not self.dot_widget.update_disabled:
+#            self.dot_widget.zoom_to_fit()
+            self.dot_widget.animate_to(self.old_xy[0], self.old_xy[1], self.old_zoom)
 
         self.matching_items = []
         self.match_idx = -1  # currently focused match
@@ -2923,9 +2931,9 @@ class DotWindow(gtk.Window):
         self.old_zoom = None
         self.find_displaying_placeholder = True
         self.find_last_searched_text = ""
-        self.find_entry.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("#808080"))
+        self.find_entry.modify_text(gtk.StateFlags.NORMAL, gdk.color_parse("#808080"))
         # Set background to white
-        self.find_entry.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFFFFF"))
+        self.find_entry.modify_base(gtk.StateFlags.NORMAL, gdk.color_parse("#FFFFFF"))
 
         if self.incremental_find:
             self.find_entry.set_text("Find")
@@ -2933,8 +2941,8 @@ class DotWindow(gtk.Window):
             self.find_entry.set_text("Find [Return = go]")
 
         # Clear the highlight, except if we're currently loading a new file.
-        if not self.widget.update_disabled:
-            self.widget.set_highlight( set(self.matching_items) )
+        if not self.dot_widget.update_disabled:
+            self.dot_widget.set_highlight( set(self.matching_items) )
 
     def prepare_find_field(self):
         # Clear the "Find" field and prepare it for user interaction,
@@ -2945,7 +2953,7 @@ class DotWindow(gtk.Window):
 
         # Restore background to white
         #
-        self.find_entry.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFFFFF"))
+        self.find_entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#FFFFFF"))
 
         # empty find term - disable next/prev
         self.button_find_next.set_sensitive(False)
@@ -2953,8 +2961,8 @@ class DotWindow(gtk.Window):
         self.matching_items = []
 
         # Clear the highlight, except if we're currently loading a new file.
-        if not self.widget.update_disabled:
-            self.widget.set_highlight( set(self.matching_items) )
+        if not self.dot_widget.update_disabled:
+            self.dot_widget.set_highlight( set(self.matching_items) )
 
         # If Find has focused something, return view to its original position
         # it had before the first focus.
@@ -2966,16 +2974,16 @@ class DotWindow(gtk.Window):
         # The update_disabled check catches the case when a new file is being loaded;
         # in that case the old view position does not matter.
         #
-        if self.match_idx != -1  and  not self.widget.update_disabled:
-#            self.widget.zoom_to_fit()
-            self.widget.animate_to(self.old_xy[0], self.old_xy[1], self.old_zoom)
+        if self.match_idx != -1  and  not self.dot_widget.update_disabled:
+#            self.dot_widget.zoom_to_fit()
+            self.dot_widget.animate_to(self.old_xy[0], self.old_xy[1], self.old_zoom)
 
         self.match_idx = -1  # currently focused match
         self.old_xy = (-1,-1)  # for view reset when clearing
         self.old_zoom = None
 
         if self.find_displaying_placeholder:
-            self.find_entry.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("#000000"))
+            self.find_entry.modify_text(gtk.STATE_NORMAL, gdk.color_parse("#000000"))
             self.find_displaying_placeholder = False
 
             # Enable the find buttons
@@ -2984,15 +2992,15 @@ class DotWindow(gtk.Window):
             self.button_find_go.set_sensitive(True)
 
     def on_key_press_event(self, widget, event):
-        if event.state & gtk.gdk.CONTROL_MASK  and  event.keyval == gtk.keysyms.o:
+        if event.state & gdk.CONTROL_MASK  and  event.keyval == keysyms.o:
             self.on_open(None)
             return True
-        if event.state & gtk.gdk.CONTROL_MASK  and  event.keyval == gtk.keysyms.f:
+        if event.state & gdk.CONTROL_MASK  and  event.keyval == keysyms.f:
             if self.find_displaying_placeholder:
                 self.prepare_find_field()
             self.find_entry.grab_focus()
             return True
-        if event.state & gtk.gdk.CONTROL_MASK  and  event.keyval == gtk.keysyms.i:
+        if event.state & gdk.CONTROL_MASK  and  event.keyval == keysyms.i:
             self.combobox.grab_focus()
             return True
 
@@ -3000,14 +3008,14 @@ class DotWindow(gtk.Window):
         # in Debian Stable.
         #
         if self.combobox.is_focus():
-            if event.keyval in [ gtk.keysyms.Return, gtk.keysyms.KP_Enter, gtk.keysyms.Escape ]:
-                self.widget.grab_focus()
+            if event.keyval in [ keysyms.Return, keysyms.KP_Enter, keysyms.Escape ]:
+                self.dot_widget.grab_focus()
                 return True
 
-#        print gtk.gdk.keyval_name(event.keyval), event.state
+#        print gdk.keyval_name(event.keyval), event.state
 
         if self.find_entry.is_focus():
-            if event.keyval == gtk.keysyms.Escape:
+            if event.keyval == keysyms.Escape:
 #                # XXX usability TEST
 #                #
 #                # Escape:
@@ -3018,7 +3026,7 @@ class DotWindow(gtk.Window):
 #                    self.prepare_find_field()
 #                else:
 #                    self.clear_find_field()
-#                    self.widget.grab_focus()
+#                    self.dot_widget.grab_focus()
 
                 # First press = clear and exit focus
                 #
@@ -3026,23 +3034,23 @@ class DotWindow(gtk.Window):
                 #  or refocus the field and then just Backspace...)
                 #
                 self.clear_find_field()
-                self.widget.grab_focus()
+                self.dot_widget.grab_focus()
 
                 return True
-            elif event.keyval == gtk.keysyms.Return  or  event.keyval == gtk.keysyms.KP_Enter:
-                self.widget.grab_focus()
+            elif event.keyval == keysyms.Return  or  event.keyval == keysyms.KP_Enter:
+                self.dot_widget.grab_focus()
                 if not self.incremental_find:
                     self.find_and_highlight_matches()  # run the search now
                 self.find_first()
                 return True
         else:
-            if event.keyval == gtk.keysyms.Return  or  event.keyval == gtk.keysyms.KP_Enter:
+            if event.keyval == keysyms.Return  or  event.keyval == keysyms.KP_Enter:
                 self.find_first()
                 return True
-            if event.keyval == gtk.keysyms.n:
+            if event.keyval == keysyms.n:
                 self.find_next()
                 return True
-            if event.keyval == gtk.keysyms.N:
+            if event.keyval == keysyms.N:
                 self.find_prev()
                 return True
 
@@ -3052,7 +3060,7 @@ class DotWindow(gtk.Window):
         # Run incremental Find on key release in the Find field.
         #
         if self.find_entry.is_focus():
-            if event.keyval in [ gtk.keysyms.Escape, gtk.keysyms.Return, gtk.keysyms.KP_Enter ]:
+            if event.keyval in [ keysyms.Escape, keysyms.Return, keysyms.KP_Enter ]:
                 return False
             # Ignore the Ctrl+F that gets us here (and other Ctrl+something key combinations).
             #
@@ -3061,8 +3069,8 @@ class DotWindow(gtk.Window):
             # XXX: it is possible to press Ctrl+F quickly in such a way that
             # the "F" generates a separate release event with no CONTROL_MASK. What to do then?
             #
-#            print gtk.gdk.keyval_name(event.keyval)   # DEBUG
-            if event.state & gtk.gdk.CONTROL_MASK  and  event.keyval != gtk.keysyms.BackSpace:
+#            print gdk.keyval_name(event.keyval)   # DEBUG
+            if event.state & gdk.CONTROL_MASK  and  event.keyval != keysyms.BackSpace:
                 return False
             if self.find_displaying_placeholder:
                 return False
@@ -3111,7 +3119,7 @@ class DotWindow(gtk.Window):
     #
     def on_find_clear(self, action):
         self.clear_find_field()
-        self.widget.grab_focus()
+        self.dot_widget.grab_focus()
     def on_find_first(self, action):
         self.find_and_highlight_matches()
         self.find_first()
@@ -3134,7 +3142,7 @@ class DotWindow(gtk.Window):
         text = self.find_entry.get_text()
         if text != self.find_last_searched_text:
             self.find_last_searched_text = text
-            self.matching_items = self.widget.graph.filter_items_by_text( text )
+            self.matching_items = self.dot_widget.graph.filter_items_by_text( text )
             self.match_idx = -1  # currently focused match
 
             # Make background of Find light red if nothing matches.
@@ -3142,9 +3150,9 @@ class DotWindow(gtk.Window):
             #
             if len(text) > 0  and  len(self.matching_items) == 0:
                 # TODO: this color is kind of ugly, find a better one
-                self.find_entry.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse("#F0B0A0"))
+                self.find_entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#F0B0A0"))
             else:
-                self.find_entry.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFFFFF"))
+                self.find_entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#FFFFFF"))
 
             # find_first() has not been done yet - disable next/prev
             self.button_find_next.set_sensitive(False)
@@ -3153,7 +3161,7 @@ class DotWindow(gtk.Window):
         # We always highlight the matches, though, to give the user a way to re-highlight them
         # after exploring the graph using the mouse (which destroys the highlight).
         #
-        self.widget.set_highlight( set(self.matching_items) )
+        self.dot_widget.set_highlight( set(self.matching_items) )
 
     def find_first(self):
         text = self.find_entry.get_text()
@@ -3167,7 +3175,7 @@ class DotWindow(gtk.Window):
                 self.match_idx = -1  # currently focused match (-1 = none)
                 self.old_xy = (-1,-1)  # for view reset when clearing
                 self.old_zoom = None
-                self.widget.set_highlight( set( [] ) )
+                self.dot_widget.set_highlight( set( [] ) )
                 return
 
             # Remember original view position.
@@ -3182,8 +3190,8 @@ class DotWindow(gtk.Window):
             #
             if self.old_zoom is None:
                 # use target, not current value, just in case an animation is in progress
-                self.old_xy = (self.widget.target_x, self.widget.target_y)
-                self.old_zoom = self.widget.target_zoom_ratio
+                self.old_xy = (self.dot_widget.target_x, self.dot_widget.target_y)
+                self.old_zoom = self.dot_widget.target_zoom_ratio
 
             if self.incremental_find:
                 # incremental mode:
@@ -3193,8 +3201,8 @@ class DotWindow(gtk.Window):
 
                 # focus and center the first match
                 node = self.matching_items[self.match_idx]
-                self.widget.set_highlight( set( [node] ) )
-                self.widget.animate_to( node.x, node.y )
+                self.dot_widget.set_highlight( set( [node] ) )
+                self.dot_widget.animate_to( node.x, node.y )
             else:
                 # non-incremental mode:
                 #   - Return/FindGo highlights everything
@@ -3220,8 +3228,8 @@ class DotWindow(gtk.Window):
 
         # focus and center the next match
         node = self.matching_items[self.match_idx]
-        self.widget.set_highlight( set( [node] ) )
-        self.widget.animate_to( node.x, node.y )
+        self.dot_widget.set_highlight( set( [node] ) )
+        self.dot_widget.animate_to( node.x, node.y )
     def find_prev(self):
         nmatches = len(self.matching_items)
         if nmatches == 0:
@@ -3233,12 +3241,12 @@ class DotWindow(gtk.Window):
 
         # focus and center the prev match
         node = self.matching_items[self.match_idx]
-        self.widget.set_highlight( set( [node] ) )
-        self.widget.animate_to( node.x, node.y )
+        self.dot_widget.set_highlight( set( [node] ) )
+        self.dot_widget.animate_to( node.x, node.y )
 
     def set_animated(self, animate_view, animate_highlights):
         # Enable/disable UI animations.
-        self.widget.set_animated(animate_view, animate_highlights)
+        self.dot_widget.set_animated(animate_view, animate_highlights)
 
     def set_filter(self, filter):
         # Set GraphViz filter name for reading .dot files.
@@ -3266,7 +3274,7 @@ class DotWindow(gtk.Window):
             guiname = filter
 
         self.combobox.set_active( self.combobox_idx_by_name[guiname] )
-        self.widget.set_filter(filter)
+        self.dot_widget.set_filter(filter)
 
     def on_filter_change(self, combobox):
         filter = get_active_text(combobox)
@@ -3277,29 +3285,29 @@ class DotWindow(gtk.Window):
             filter = None
 
         self.set_filter(filter)
-        filename = self.widget.openfilename
+        filename = self.dot_widget.openfilename
         if filename is not None  and  filter is not None:
             # XXX HACK: always load xdot files without filter; otherwise use specified filter
             if os.path.splitext(filename)[1] != ".xdot":
-                self.widget.reload()
-                self.widget.zoom_to_fit(animate=False)
+                self.dot_widget.reload()
+                self.dot_widget.zoom_to_fit(animate=False)
 
     def set_graph_from_message(self, string):
         # Generate a one-node graph from string and render it.
         # Useful for passive error messages and the like.
-        self.widget.set_graph_from_message(string)
+        self.dot_widget.set_graph_from_message(string)
 
     def set_dotcode(self, dotcode, filename=None, zoom_to_fit=True):
-        if self.widget.set_dotcode(dotcode, filename):
+        if self.dot_widget.set_dotcode(dotcode, filename):
             self.update_title(filename)
             if zoom_to_fit:
-                self.widget.zoom_to_fit(animate=False)
+                self.dot_widget.zoom_to_fit(animate=False)
 
     def set_xdotcode(self, xdotcode, filename=None, zoom_to_fit=True):
-        if self.widget.set_xdotcode(xdotcode, filename):
+        if self.dot_widget.set_xdotcode(xdotcode, filename):
             self.update_title(filename)
             if zoom_to_fit:
-                self.widget.zoom_to_fit(animate=False)
+                self.dot_widget.zoom_to_fit(animate=False)
         
     def update_title(self, filename=None):
         if filename is None:
@@ -3313,7 +3321,7 @@ class DotWindow(gtk.Window):
             # otherwise it will think that the *old* file has changed
             # when self.last_mtime is updated to the mtime of the *new* file.
             #
-            self.widget.update_disabled = True
+            self.dot_widget.update_disabled = True
 
             # Clear Find system state (list of matching items, match_idx,
             # old view position, ...).
@@ -3325,7 +3333,7 @@ class DotWindow(gtk.Window):
             #  open a new file. Focus would stay in the Find field,
             #  but the field would have the placeholder text.) 
             #
-            self.widget.grab_focus()
+            self.dot_widget.grab_focus()
 
             self.update_title()  # remove the old filename from the window title
 
@@ -3340,27 +3348,26 @@ class DotWindow(gtk.Window):
             self.set_graph_from_message("[Opening '%s'...]" % os.path.basename(filename))
 
             # Change cursor to "busy" and force-redraw the window
-            self.widget.reset_mouse_cursor()
-            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+            self.dot_widget.reset_mouse_cursor()
+            self.window.set_cursor(gdk.Cursor(gdk.WATCH))
             while gtk.events_pending():
                 gtk.main_iteration_do(True)
 
-            fp = file(filename, 'rt')
-            # XXX HACK: always load xdot files without filter; otherwise use specified filter
-            if os.path.splitext(filename)[1] == ".xdot":
-                self.set_xdotcode(fp.read(), filename)
-            else:
-                self.set_dotcode(fp.read(), filename)
-            fp.close()
+            with open(filename, 'rt') as fp:
+                # XXX HACK: always load xdot files without filter; otherwise use specified filter
+                if os.path.splitext(filename)[1] == ".xdot":
+                    self.set_xdotcode(fp.read(), filename)
+                else:
+                    self.set_dotcode(fp.read(), filename)
 
             # Change cursor back and redraw (now with the actual reloaded graph).
             self.window.set_cursor(None)  # inherit cursor from parent window!
             while gtk.events_pending():
                 gtk.main_iteration_do(True)
 
-            self.widget.update_disabled = False
+            self.dot_widget.update_disabled = False
 
-        except IOError, ex:
+        except IOError as ex:
             self.window.set_cursor(None)  # inherit cursor from parent window!
             self.set_graph_from_message("[No graph loaded]")
             while gtk.events_pending():
@@ -3373,7 +3380,7 @@ class DotWindow(gtk.Window):
             dlg.run()
             dlg.destroy()
 
-            self.widget.update_disabled = False
+            self.dot_widget.update_disabled = False
 
     def on_open(self, action):
         chooser = gtk.FileChooserDialog(title="Open dot File",
@@ -3386,12 +3393,12 @@ class DotWindow(gtk.Window):
             chooser.set_current_folder(self.last_used_directory)
         # first time in each session, open in the folder where the current file is
         # (if any was given on the command line)
-        elif self.widget.openfilename is not None:
-            chooser.set_current_folder(os.path.dirname(self.widget.openfilename))
+        elif self.dot_widget.openfilename is not None:
+            chooser.set_current_folder(os.path.dirname(self.dot_widget.openfilename))
 
         chooser.set_default_response(gtk.RESPONSE_OK)
         # Filter is required to load .dot with no layout information.
-        if self.widget.filter is not None:
+        if self.dot_widget.filter is not None:
             filter = gtk.FileFilter()
             filter.set_name("Graphviz dot files")
             filter.add_pattern("*.dot")
@@ -3414,7 +3421,7 @@ class DotWindow(gtk.Window):
             chooser.destroy()
 
     def on_reload(self, action):
-        self.widget.reload()
+        self.dot_widget.reload()
 
     def reload_callback(self):
         if not self.find_displaying_placeholder:
@@ -3431,7 +3438,7 @@ def main():
     global __filter_choices__
     global __default_filter__
     global __no_filter_str__
-    choices = filter( lambda s: s != __no_filter_str__,  __filter_choices__ )
+    choices = list(filter( lambda s: s != __no_filter_str__,  __filter_choices__ ))
     choices_str = reduce( lambda a,b: a + ', ' + b,  choices )
     parser.add_option(
         '-f', '--filter',
@@ -3469,23 +3476,26 @@ def main():
         options.animate = False
         options.animate_highlight = False
 
+    # Create window (in Gtk3 we must do this before setting the application icon)
+    #
+    win = DotWindow(incremental_find=options.incremental_find)
+    win.connect('destroy', gtk.main_quit)
+
     # Set the application icon
     #
     global __icon_path__
     icon_file = "%sxdoticon.png" % __icon_path__
     icon_loaded = False
     if os.path.isfile( icon_file ):
-        from glib import GError
         try:
-            gtk.window_set_default_icon_from_file( icon_file )
+            win.set_default_icon_from_file( icon_file )
             icon_loaded = True
-        except GError:
+        except Exception as err:
+            print(err, file=sys.stderr)
             pass
     if not icon_loaded:  # use hardcoded icon if no file available. (This doesn't help in Unity.)
-        gtk.window_set_default_icon( APPICON_PIXBUF )
+        win.set_default_icon( APPICON_PIXBUF )
 
-    win = DotWindow(incremental_find=options.incremental_find)
-    win.connect('destroy', gtk.main_quit)
     win.set_filter(options.filter)
     win.set_animated(options.animate, options.animate_highlight)
     if len(args) == 0:
@@ -3900,7 +3910,7 @@ POSSIBILITY OF SUCH DAMAGE."""
 #
 import zlib
 import base64
-APPICON_PIXBUF = gtk.gdk.pixbuf_new_from_data(zlib.decompress(base64.b64decode(
+APPICON_PIXBUF = GdkPixbuf.Pixbuf.new_from_data(zlib.decompress(base64.b64decode(
 'eNrtmwlUlNcVx3tOKgwww8wAM8M2MAPDzMAAsu8g+yaiKJtEEAUJRRENCghKIG5UqyhEBRVqokn15G'
 'jTxqZpGpekSRPTRJNgmppoaBM10WowAU2bprl996Yq4rA5i4wnnHPPmQPzfXy/7733f/fedy8A/AR+'
 'tBGN/TgyS2SWakIWzsxSB+ZYgcDqqKWV2TUuj3MjMFjeFxblcc1UzENlf22S2UPf8vkWvVwuZyfjEY'
@@ -3950,7 +3960,7 @@ APPICON_PIXBUF = gtk.gdk.pixbuf_new_from_data(zlib.decompress(base64.b64decode(
 'WhKbLzKt9UQ5BaHX2Vh3DtP/lo49YkM1E99hTUMGaHycae0YM1eF5yRRMV6UGxgutsDxmV0YzfwAJW'
 'RmhVFMpU3L8DyKreOLjNNquB447I/DHjHskzLVvkdtteU5+aHX/88eMIYe0ADsEcM+KewVwn4ZrPvH'
 'fdNUDM9Yca6i1uF6xzk/0rhreQdmuB6wTwp7hbBfBn0GUzHc33GPQ50fqnU/2m37H6dJZEc='
-    )), gtk.gdk.COLORSPACE_RGB, True, 8, 64, 64, 256)
+    )), GdkPixbuf.Colorspace.RGB, True, 8, 64, 64, 256)  # colorspace, ???, depth, width, height, stride
 
 
 # Online help text.
@@ -3964,7 +3974,7 @@ APPICON_PIXBUF = gtk.gdk.pixbuf_new_from_data(zlib.decompress(base64.b64decode(
 # The content of the generated help.xdot has been pasted into this string.
 #
 __online_help_xdotcode__="""digraph G {
-	node [label="\N"];
+	node [label="\\N"];
 	graph [bb="0,0,4236.1,2308",
 		_draw_="c 9 -#ffffffff C 9 -#ffffffff P 4 0 -1 0 2308 4237 2308 4237 -1 ",
 		xdotversion="1.2"];
