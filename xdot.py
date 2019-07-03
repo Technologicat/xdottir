@@ -2094,7 +2094,6 @@ class DotWidget(gtk.DrawingArea):
         self.zoom_to_fit(animate=False)
 
     def set_dotcode(self, dotcode, filename=None, zoom_to_fit=True):
-        self.openfilename = None
         if self.filter is not None  and  filename is not None:
             self.set_graph_from_message("[Running layout filter '%s' on '%s'...]" % (self.filter, os.path.basename(filename)))
             while gtk.events_pending():
@@ -2103,6 +2102,7 @@ class DotWidget(gtk.DrawingArea):
         if xdotcode is None:
             return False
         try:
+            self.openfilename = None
             self.set_xdotcode(xdotcode, filename, zoom_to_fit)
         except ParseError as ex:
             self.set_graph_from_message("[No graph loaded]")
@@ -2123,10 +2123,10 @@ class DotWidget(gtk.DrawingArea):
             return True
 
     def set_xdotcode(self, xdotcode, filename=None, zoom_to_fit=True):
-        #print xdotcode
-
         # Clear old highlights (and stop animation) when a new graph is rendered.
         self.reset_highlight_system()
+
+        # TODO: catch xdotcode parse errors (see set_dotcode for similar)
 
         if len(xdotcode) > 0:
             if filename is not None:
