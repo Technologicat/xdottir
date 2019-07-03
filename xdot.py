@@ -748,9 +748,9 @@ class Graph(Shape):
                 #     * keypress handling
                 #
                 if do_highlight is None  or  do_highlight == "from":
-                    linked_edges = filter( lambda e: e.src == node, self.edges )
+                    linked_edges = list(filter( lambda e: e.src == node, self.edges ))
                 else:  # "to" or "to_links_only"
-                    linked_edges = filter( lambda e: e.dst == node, self.edges )
+                    linked_edges = list(filter( lambda e: e.dst == node, self.edges ))
                 jump.highlight.update( linked_edges )
 
                 # Optionally, highlight the linked nodes, too.
