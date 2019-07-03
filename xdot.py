@@ -2473,7 +2473,7 @@ class DotWidget(gtk.DrawingArea):
             self.zoom_to_fit()
             return True
         if event.keyval in (gdk.keyval_from_name("KP_1"),
-                            gdk.keyval_from_name("_1")):  # FIXME 1 or _1?
+                            gdk.keyval_from_name("1")):
             self.zoom_image(1.0)
             return True
         if event.keyval == gdk.keyval_from_name("q"):
