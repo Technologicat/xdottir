@@ -1882,7 +1882,7 @@ class NullAction(DragAction):
 class PanAction(DragAction):
 
     def start(self):
-        self.dot_widget.window.set_cursor(gdk.Cursor(gdk.FLEUR))
+        self.dot_widget.get_window().set_cursor(gdk.Cursor(gdk.CursorType.FLEUR))
 
     def drag(self, deltax, deltay):
         self.dot_widget.x += deltax / self.dot_widget.zoom_ratio
@@ -1890,8 +1890,8 @@ class PanAction(DragAction):
         self.dot_widget.queue_draw()
 
     def stop(self):
-#        self.dot_widget.window.set_cursor(gdk.Cursor(gdk.ARROW))
-        self.dot_widget.window.set_cursor(None)  # inherit cursor from parent window!
+#        self.dot_widget.get_window().set_cursor(gdk.Cursor(gdk.CursorType.ARROW))
+        self.dot_widget.get_window().set_cursor(None)  # inherit cursor from parent window!
 
     abort = stop
 
@@ -1958,8 +1958,9 @@ class DotWidget(gtk.DrawingArea):
     global __default_filter__
     filter = __default_filter__  # set default filter (see also main())
 
-    def __init__(self):
+    def __init__(self, parent):
         gtk.DrawingArea.__init__(self)
+        self.parent = parent  # FIXME: maybe some better way to do this through Gtk 3, like in Gtk 2?
 
         self.graph = Graph()
         self.openfilename = None
@@ -2012,8 +2013,8 @@ class DotWidget(gtk.DrawingArea):
         # Call this when loading a new graph; otherwise the cursor may remain
         # as "hand" while loading (when it should change to "busy")!
         #
-        self.window.set_cursor(None)  # None = use inherited mouse cursor
-        self.parent.window.set_cursor(None)
+        self.get_window().set_cursor(None)  # None = use inherited mouse cursor
+        self.parent.get_window().set_cursor(None)
 
     def set_animated(self, animate_view, animate_highlights):
         # Enable/disable view pan/zoom animations.
@@ -2177,7 +2178,7 @@ class DotWidget(gtk.DrawingArea):
 
                 # Change cursor to "busy" and force-redraw the window
                 self.reset_mouse_cursor()
-                self.parent.window.set_cursor(gdk.Cursor(gdk.WATCH))
+                self.get_window().set_cursor(gdk.Cursor(gdk.CursorType.WATCH))
                 while gtk.events_pending():
                     gtk.main_iteration_do(True)
 
@@ -2189,11 +2190,11 @@ class DotWidget(gtk.DrawingArea):
                         self.set_dotcode(fp.read(), self.openfilename, zoom_to_fit=False)
 
                 # Change cursor back and redraw (now with the actual reloaded graph).
-                self.parent.window.set_cursor(None)  # inherit cursor from parent window!
+                self.parent.get_window().set_cursor(None)  # inherit cursor from parent window!
                 while gtk.events_pending():
                     gtk.main_iteration_do(True)
             except IOError:
-                self.parent.window.set_cursor(None)  # inherit cursor from parent window!
+                self.parent.get_window().set_cursor(None)  # inherit cursor from parent window!
                 self.set_graph_from_message("[Could not reload '%s']" % self.openfilename)
                 while gtk.events_pending():
                     gtk.main_iteration_do(True)
@@ -2749,7 +2750,7 @@ class DotWindow(gtk.Window):
         vbox = gtk.VBox()
         window.add(vbox)
 
-        self.dot_widget = DotWidget()
+        self.dot_widget = DotWidget(parent=self)
         self.dot_widget.set_reload_callback( self.reload_callback )
 
         # Create a UIManager instance
@@ -3379,7 +3380,7 @@ class DotWindow(gtk.Window):
 
             # Change cursor to "busy" and force-redraw the window
             self.dot_widget.reset_mouse_cursor()
-            self.window.set_cursor(gdk.Cursor(gdk.WATCH))
+            self.get_window().set_cursor(gdk.Cursor(gdk.CursorType.WATCH))
             while gtk.events_pending():
                 gtk.main_iteration_do(True)
 
@@ -3391,14 +3392,14 @@ class DotWindow(gtk.Window):
                     self.set_dotcode(fp.read(), filename)
 
             # Change cursor back and redraw (now with the actual reloaded graph).
-            self.window.set_cursor(None)  # inherit cursor from parent window!
+            self.get_window().set_cursor(None)  # inherit cursor from parent window!
             while gtk.events_pending():
                 gtk.main_iteration_do(True)
 
             self.dot_widget.update_disabled = False
 
         except IOError as ex:
-            self.window.set_cursor(None)  # inherit cursor from parent window!
+            self.get_window().set_cursor(None)  # inherit cursor from parent window!
             self.set_graph_from_message("[No graph loaded]")
             while gtk.events_pending():
                 gtk.main_iteration_do(True)
