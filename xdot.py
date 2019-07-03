@@ -2063,10 +2063,11 @@ class DotWidget(gtk.DrawingArea):
                     pos = error.find('\n', pos+1)
                 error = error[0:pos]  # max_lines lines, without last linefeed
                 error += "\n... <%d more line%s> ...\n\nLong error message truncated. Run in terminal to capture full output." % (n_excess, plural_s)
-            dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                       message_format=error,
-                                       buttons=gtk.BUTTONS_OK)
-            dialog.set_title('Dot Viewer')
+            dialog = gtk.MessageDialog(parent=self.parent, flags=0,
+                                       message_type=gtk.MessageType.ERROR,
+                                       buttons=gtk.ButtonsType.OK,
+                                       text="Dot viewer")  # FIXME: base_title
+            dialog.format_secondary_text(error)
             dialog.run()
             dialog.destroy()
             return None
@@ -2105,10 +2106,11 @@ class DotWidget(gtk.DrawingArea):
             self.set_xdotcode(xdotcode, filename, zoom_to_fit)
         except ParseError as ex:
             self.set_graph_from_message("[No graph loaded]")
-            dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                       message_format=str(ex),
-                                       buttons=gtk.BUTTONS_OK)
-            dialog.set_title('Dot Viewer')
+            dialog = gtk.MessageDialog(parent=self.parent, flags=0,
+                                       message_type=gtk.MessageType.ERROR,
+                                       buttons=gtk.ButtonsType.OK,
+                                       text="Dot viewer")  # FIXME: base_title
+            dialog.format_secondary_text(str(ex))
             dialog.run()
             dialog.destroy()
             return False
@@ -3041,6 +3043,8 @@ class DotWindow(gtk.Window):
         # Focus events and is_focus() don't seem to work with ComboBox at least
         # in Debian Stable.
         #
+        # FIXME: Cannot currently de-focus combobox by pressing ESC.
+        #
         if self.combobox.is_focus():
             if event.keyval in [ gdk.keyval_from_name("Return"), gdk.keyval_from_name("KP_Enter"), gdk.keyval_from_name("Escape") ]:
                 self.dot_widget.grab_focus()
@@ -3294,12 +3298,13 @@ class DotWindow(gtk.Window):
             choices_str = reduce( lambda a,b: a + ', ' + b,  __filter_choices__ )
             error_msg = "set_filter(): filter '%s' is not known. Valid filters: %s." % (filter, choices_str)
 
-            dlg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                    message_format=error_msg,
-                                    buttons=gtk.BUTTONS_OK)
-            dlg.set_title(self.base_title)
-            dlg.run()
-            dlg.destroy()
+            dialog = gtk.MessageDialog(parent=self, flags=0,
+                                       message_type=gtk.MessageType.ERROR,
+                                       buttons=gtk.ButtonsType.OK,
+                                       text=self.base_title)
+            dialog.format_secondary_text(error_msg)
+            dialog.run()
+            dialog.destroy()
 
 #            raise ValueError(error_msg)
 
@@ -3410,12 +3415,13 @@ class DotWindow(gtk.Window):
             while gtk.events_pending():
                 gtk.main_iteration_do(True)
 
-            dlg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                    message_format=str(ex),
-                                    buttons=gtk.BUTTONS_OK)
-            dlg.set_title(self.base_title)
-            dlg.run()
-            dlg.destroy()
+            dialog = gtk.MessageDialog(parent=self, flags=0,
+                                       message_type=gtk.MessageType.ERROR,
+                                       buttons=gtk.ButtonsType.OK,
+                                       text=self.base_title)
+            dialog.format_secondary_text(str(ex))
+            dialog.run()
+            dialog.destroy()
 
             self.dot_widget.update_disabled = False
 
