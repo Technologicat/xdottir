@@ -18,6 +18,8 @@ djs52uk - Dotted lines in xdot
 
 Juha Jeronen - Find, graph exploration tweaks, additional UI animations, UI improvements
 
+IOhannes m zmölnig - Gtk 3 compatibility help, via his XDot fork https://git.iem.at/zmoelnig/dotterel/blob/master/dotterel.py
+
 
 This software uses ColorBrewer Color Schemes by Cynthia Brewer, Mark Harrower, and The Pennsylvania State University; for details, see LICENSE_colorbrewer_color_schemes.
 

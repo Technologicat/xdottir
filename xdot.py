@@ -2900,7 +2900,9 @@ class DotWindow(gtk.Window):
                        "sk - Quit key binding",
                        "Alberto Rodriguez - Image support",
                        "djs52uk - Dotted lines in xdot",
-                       "Juha Jeronen - Find, graph exploration tweaks,\n    additional UI animations, UI improvements", "\nThis software uses ColorBrewer Color Schemes\n    by Cynthia Brewer, Mark Harrower, and\n    The Pennsylvania State University;\n    for details, see the license.")
+                       "Juha Jeronen - Find, graph exploration tweaks,\n    additional UI animations, UI improvements",
+                       "IOhannes m zmölnig - Gtk 3 compatibility help, via his XDot fork\n    https://git.iem.at/zmoelnig/dotterel/blob/master/dotterel.py",
+                       "\nThis software uses ColorBrewer Color Schemes\n    by Cynthia Brewer, Mark Harrower, and\n    The Pennsylvania State University;\n    for details, see the license.")
         about.set_authors(author_list)
         about.set_documenters( ("Juha Jeronen",) )
 
