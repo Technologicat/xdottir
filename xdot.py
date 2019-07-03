@@ -141,7 +141,7 @@ def setup_highlight_color(gtkobject):
         from the "base" and "light" styles of STATE_SELECTED, respectively.
 
         The alpha value (not present in the GTK styles) is set to 1.0.
-    
+
     """
 
     # http://lobais.blogspot.fi/2006/07/system-colors-in-gtk.html
@@ -150,18 +150,23 @@ def setup_highlight_color(gtkobject):
     global highlight_light
 
     if "highlight_base" not in globals():
-        try:  # ...to get system highlight color
-            state = getattr(gtk, "STATE_SELECTED")
-            style_base  = getattr(gtkobject.get_style(), "base")
-            style_light = getattr(gtkobject.get_style(), "light")
-            color_base  = style_base[state]
-            color_light = style_light[state]
-        except AttributeError:
-            print("xdot: WARNING: unable to get system highlight color; using default blue.", file=sys.stderr)
+        # # FIXME: needs more changes to support Gtk3 properly.
+        # try:  # ...to get system highlight color
+        #     state = gtk.StateFlags.SELECTED
+        #     style_base  = getattr(gtkobject.get_style(), "base")
+        #     style_light = getattr(gtkobject.get_style(), "light")
+        #     color_base  = style_base[state]
+        #     color_light = style_light[state]
+        # except AttributeError:
+        #     print("xdot: WARNING: unable to get system highlight color; using default blue.", file=sys.stderr)
+        #
+        #     # This default is extracted from GNOME 2.30.2 in Debian Stable, August 2012.
+        #     color_base  = gdk.Color(34438, 43947, 55769)
+        #     color_light = gdk.Color(53951, 58126, 63317)
 
-            # This default is extracted from GNOME 2.30.2 in Debian Stable, August 2012.
-            color_base  = gdk.Color(34438, 43947, 55769)
-            color_light = gdk.Color(53951, 58126, 63317)
+        # This default is extracted from GNOME 2.30.2 in Debian Stable, August 2012.
+        color_base  = gdk.Color(34438, 43947, 55769)
+        color_light = gdk.Color(53951, 58126, 63317)
 
         alp = 1.0  # translucency (1.0 = opaque)
         highlight_base = (color_base.red/65535.0, color_base.green/65535.0, color_base.blue/65535.0, alp)
@@ -600,7 +605,7 @@ class Element(CompoundShape):
         # This is used by the Find logic.
         #
         textshapes = filter( lambda obj: isinstance(obj, TextShape), self.shapes )
-        texts      = map( lambda obj: obj.t, textshapes )
+        texts      = list(map( lambda obj: obj.t, textshapes ))
         return texts
 
 
@@ -751,10 +756,10 @@ class Graph(Shape):
                 # Optionally, highlight the linked nodes, too.
                 #
                 if do_highlight == "from":
-                    linked_nodes = map( lambda e: e.dst, linked_edges )
+                    linked_nodes = list(map( lambda e: e.dst, linked_edges ))
                     jump.highlight.update( linked_nodes )
                 elif do_highlight == "to":
-                    linked_nodes = map( lambda e: e.src, linked_edges )
+                    linked_nodes = list(map( lambda e: e.src, linked_edges ))
                     jump.highlight.update( linked_nodes )
 
                 return jump
@@ -785,7 +790,7 @@ class Graph(Shape):
             return any( filter( lambda t: t.lower().find(term) != -1, texts ) )
 
         matching_pairs = filter( lambda o: match_text(text, o[1]), self.items_and_texts )
-        matching_items = map( lambda o: o[0], matching_pairs )  # discard text lists
+        matching_items = list(map( lambda o: o[0], matching_pairs ))  # discard text lists
 
         return matching_items
 
@@ -800,7 +805,7 @@ class XDotAttrParser:
         self.parser = parser
         self.buf = buf
         self.pos = 0
-        
+
         self.pen = Pen()
         self.shapes = []
 
@@ -1279,7 +1284,7 @@ class DotLexer(Lexer):
             text = text.replace('\\\r\n', '')
             text = text.replace('\\\r', '')
             text = text.replace('\\\n', '')
-            
+
             # quotes
             text = text.replace('\\"', '"')
 
@@ -1421,7 +1426,7 @@ class XDotParser(DotParser):
     def __init__(self, xdotcode):
         lexer = DotLexer(buf = xdotcode)
         DotParser.__init__(self, lexer)
-        
+
         self.nodes = []
         self.edges = []
         self.shapes = []
@@ -1450,7 +1455,7 @@ class XDotParser(DotParser):
             self.height = max(ymax - ymin, 1)
 
             self.top_graph = False
-        
+
         for attr in ("_draw_", "_ldraw_", "_hdraw_", "_tdraw_", "_hldraw_", "_tldraw_"):
             if attr in attrs:
                 parser = XDotAttrParser(self, attrs[attr])
@@ -1481,7 +1486,7 @@ class XDotParser(DotParser):
             pos = attrs['pos']
         except KeyError:
             return
-        
+
         points = self.parse_edge_pos(pos)
         shapes = []
         for attr in ("_draw_", "_ldraw_", "_hdraw_", "_tdraw_", "_hldraw_", "_tldraw_"):
@@ -2526,8 +2531,10 @@ class DotWidget(gtk.DrawingArea):
             else: # alt
                 do_highlight = "to_links_only"
 
-        x, y = self.get_pointer()  # Note: not event.window; that would include the toolbar height
-                                   # and we would get the graph coordinates wrong.
+        # Note: **NOT** event.window; that would include the toolbar height, and we would get the graph coordinates wrong.
+        # TODO: should use Gdk.Window.get_device_position instead, but that returns *window* not widget coordinates,
+        # TODO: and it also requires a device handle, which we don't have here.
+        x, y = self.get_pointer()
         item = self.get_jump(x, y, highlight_linked_nodes=do_highlight)
         if item is not None:
             self.set_highlight(item.highlight)
@@ -2738,7 +2745,7 @@ class DotWindow(gtk.Window):
         window = self
 
         window.set_title(self.base_title)
-        window.set_default_size(720, 512)
+        window.set_default_size(1000, 700)
         vbox = gtk.VBox()
         window.add(vbox)
 
@@ -2905,7 +2912,10 @@ class DotWindow(gtk.Window):
         # Clear the "Find" field, setting its text to the placeholder text
         # ("Find" printed in gray).
 
-#        # how to set colors:
+        # FIXME: This stuff is disabled for now. In Gtk3, widgets use CSS styling and have no color attributes themselves.
+        # Additionally, in Gtk3, gtk.STATE_NORMAL is Gtk.StateFlags.NORMAL.
+        # https://mail.gnome.org/archives/gtk-app-devel-list/2016-August/msg00021.html
+#        # how to set colors in Gtk2 (old!):
 #        # widget color
 #        entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#FF0000"))
 #        # frame color
@@ -2940,9 +2950,11 @@ class DotWindow(gtk.Window):
         self.old_zoom = None
         self.find_displaying_placeholder = True
         self.find_last_searched_text = ""
-        self.find_entry.modify_text(gtk.StateFlags.NORMAL, gdk.color_parse("#808080"))
-        # Set background to white
-        self.find_entry.modify_base(gtk.StateFlags.NORMAL, gdk.color_parse("#FFFFFF"))
+        # FIXME: Disabled for now. In Gtk3, widgets use CSS styling and have no text "color"...
+        # https://mail.gnome.org/archives/gtk-app-devel-list/2016-August/msg00021.html
+        # self.find_entry.modify_text(gtk.StateFlags.NORMAL, gdk.color_parse("#808080"))
+        # # Set background to white
+        # self.find_entry.modify_base(gtk.StateFlags.NORMAL, gdk.color_parse("#FFFFFF"))
 
         if self.incremental_find:
             self.find_entry.set_text("Find")
@@ -2962,7 +2974,9 @@ class DotWindow(gtk.Window):
 
         # Restore background to white
         #
-        self.find_entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#FFFFFF"))
+        # FIXME: Disabled for now. In Gtk3, widgets use CSS styling and have no background "color"...
+        # https://mail.gnome.org/archives/gtk-app-devel-list/2016-August/msg00021.html
+        # self.find_entry.modify_base(gtk.StateFlags.NORMAL, gdk.color_parse("#FFFFFF"))
 
         # empty find term - disable next/prev
         self.button_find_next.set_sensitive(False)
@@ -2992,7 +3006,9 @@ class DotWindow(gtk.Window):
         self.old_zoom = None
 
         if self.find_displaying_placeholder:
-            self.find_entry.modify_text(gtk.STATE_NORMAL, gdk.color_parse("#000000"))
+            # FIXME: Disabled for now. In Gtk3, widgets use CSS styling and have no text "color"...
+            # https://mail.gnome.org/archives/gtk-app-devel-list/2016-August/msg00021.html
+            # self.find_entry.modify_text(gtk.StateFlags.NORMAL, gdk.color_parse("#000000"))
             self.find_displaying_placeholder = False
 
             # Enable the find buttons
@@ -3160,11 +3176,13 @@ class DotWindow(gtk.Window):
             # Make background of Find light red if nothing matches.
             # Restore white if something matches.
             #
-            if len(text) > 0  and  len(self.matching_items) == 0:
-                # TODO: this color is kind of ugly, find a better one
-                self.find_entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#F0B0A0"))
-            else:
-                self.find_entry.modify_base(gtk.STATE_NORMAL, gdk.color_parse("#FFFFFF"))
+            # FIXME: Disabled for now. In Gtk3, widgets use CSS styling and have no background "color"...
+            # https://mail.gnome.org/archives/gtk-app-devel-list/2016-August/msg00021.html
+            # if len(text) > 0  and  len(self.matching_items) == 0:
+            #     # TODO: this color is kind of ugly, find a better one
+            #     self.find_entry.modify_base(gtk.StateFlags.NORMAL, gdk.color_parse("#F0B0A0"))
+            # else:
+            #     self.find_entry.modify_base(gtk.StateFlags.NORMAL, gdk.color_parse("#FFFFFF"))
 
             # find_first() has not been done yet - disable next/prev
             self.button_find_next.set_sensitive(False)
@@ -3396,11 +3414,9 @@ class DotWindow(gtk.Window):
 
     def on_open(self, action):
         chooser = gtk.FileChooserDialog(title="Open dot File",
-                                        action=gtk.FILE_CHOOSER_ACTION_OPEN,
-                                        buttons=(gtk.STOCK_CANCEL,
-                                                 gtk.RESPONSE_CANCEL,
-                                                 gtk.STOCK_OPEN,
-                                                 gtk.RESPONSE_OK))
+                                        action=gtk.FileChooserAction.OPEN)
+        chooser.add_button(gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL)
+        chooser.add_button(gtk.STOCK_OPEN, gtk.ResponseType.OK)
         if self.last_used_directory is not None:
             chooser.set_current_folder(self.last_used_directory)
         # first time in each session, open in the folder where the current file is
@@ -3408,7 +3424,7 @@ class DotWindow(gtk.Window):
         elif self.dot_widget.openfilename is not None:
             chooser.set_current_folder(os.path.dirname(self.dot_widget.openfilename))
 
-        chooser.set_default_response(gtk.RESPONSE_OK)
+        chooser.set_default_response(gtk.ResponseType.OK)
         # Filter is required to load .dot with no layout information.
         if self.dot_widget.filter is not None:
             filter = gtk.FileFilter()
@@ -3424,7 +3440,7 @@ class DotWindow(gtk.Window):
         filter.set_name("All files")
         filter.add_pattern("*")
         chooser.add_filter(filter)
-        if chooser.run() == gtk.RESPONSE_OK:
+        if chooser.run() == gtk.ResponseType.OK:
             filename = chooser.get_filename()
             self.last_used_directory = chooser.get_current_folder()
             chooser.destroy()
