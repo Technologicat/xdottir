@@ -390,6 +390,9 @@ class TextShape(Shape):
         width = exts.logical_rect.width / pango.SCALE
         height = exts.logical_rect.height / pango.SCALE
 
+        if exts.logical_rect.x != 0.0 or exts.logical_rect.y != 0.0:
+            print("WARNING: node '%s' has nonzero logical_rect x, y; label may be positioned incorrectly." % t, file=sys.stderr)
+
         if 0:  # DEBUG
             inkr = [float(getattr(exts.ink_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
             logr = [float(getattr(exts.logical_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
@@ -403,6 +406,8 @@ class TextShape(Shape):
             width = self.w # equivalent to width *= f
             height *= f
             descent *= f
+            originx *= f
+            originy *= f
         else:
             f = 1.0
 
@@ -422,7 +427,7 @@ class TextShape(Shape):
             inkr = [float(getattr(line_exts.ink_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
             logr = [float(getattr(line_exts.logical_rect, k)) / pango.SCALE for k in ("x", "y", "width", "height")]
             print(inkr, logr)
-        line_height = line_exts.ink_rect.height / pango.SCALE
+        line_height = f * line_exts.ink_rect.height / pango.SCALE
 
         x -= originx
         y = self.y - originy - line_height + descent
