@@ -41,7 +41,6 @@ import math
 import colorsys
 import time
 import re
-from functools import reduce
 import zlib
 import base64
 
@@ -3314,7 +3313,7 @@ class DotWindow(Gtk.Window):
 
         # Validate.
         if filter is not None and filter not in FILTER_CHOICES:
-            choices_str = reduce(lambda a, b: a + ', ' + b, FILTER_CHOICES)
+            choices_str = ", ".join(FILTER_CHOICES)
             error_msg = "set_filter(): filter '%s' is not known. Valid filters: %s." % (filter, choices_str)
 
             dialog = Gtk.MessageDialog(parent=self, flags=0,
@@ -3491,7 +3490,7 @@ def main():
         version='%%prog %s' % __version__)
 
     choices = [s for s in FILTER_CHOICES if s != NO_FILTER_STR]
-    choices_str = reduce(lambda a, b: a + ', ' + b, choices)
+    choices_str = ", ".join(choices)
     parser.add_option(
         '-f', '--filter',
         type='choice', choices=choices,
