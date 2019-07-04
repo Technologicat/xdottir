@@ -3562,7 +3562,6 @@ def main():
             icon_loaded = True
         except Exception as err:
             print(err, file=sys.stderr)
-            pass
     if not icon_loaded:  # use hardcoded icon if no file available. (This doesn't help in Unity.)
         win.set_default_icon(APPICON_PIXBUF)
 
