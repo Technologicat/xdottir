@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 #
 # Copyright 2008 Jose Fonseca
-#           2012 Juha Jeronen (the Find field, extension of graph exploration functionality,
-#                              additional UI animations, several small UI improvements)
+#           2012-2019 Juha Jeronen (the Find field, extension of graph exploration functionality,
+#                                   additional UI animations, several small UI improvements,
+#                                   Python 3 + Gtk 3 conversion)
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published
