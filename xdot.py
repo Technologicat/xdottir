@@ -58,6 +58,8 @@ import colorsys
 import time
 import re
 from functools import reduce
+import zlib
+import base64
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -3976,8 +3978,6 @@ POSSIBILITY OF SUCH DAMAGE."""
 #   ./img_to_pygtk.py xdoticon.png >xdoticon_code.py
 # => paste it here.
 #
-import zlib
-import base64
 APPICON_PIXBUF = GdkPixbuf.Pixbuf.new_from_data(zlib.decompress(base64.b64decode(
     'eNrtmwlUlNcVx3tOKgwww8wAM8M2MAPDzMAAsu8g+yaiKJtEEAUJRRENCghKIG5UqyhEBRVqokn15G'
     'jTxqZpGpekSRPTRJNgmppoaBM10WowAU2bprl996Yq4rA5i4wnnHPPmQPzfXy/7733f/fedy8A/AR+'
