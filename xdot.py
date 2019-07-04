@@ -3564,6 +3564,14 @@ def main():
             print(err, file=sys.stderr)
     if not icon_loaded:  # use hardcoded icon if no file available. (This doesn't help in Unity.)
         win.set_default_icon(APPICON_PIXBUF)
+    # https://stackoverflow.com/questions/45162862/how-do-i-set-an-icon-for-the-whole-application-using-pygobject
+    # In Wayland, for the dash, this needs to match exec= in the .desktop file, then it'll use the icon= from the same .desktop file.
+    #GLib.set_prgname("python3 -m xdot")
+    #win.set_icon_list([None, None, None, APPICON_PIXBUF, None])  # 24, 32, 48, 64, 96  # this should work, but None is not accepted.
+    # https://developer.gnome.org/gtk3/stable/GtkIconTheme.html
+    thm = Gtk.IconTheme.get_default()
+    Gtk.IconTheme.add_resource_path(thm, __icon_path__)
+    # iconinfo = Gtk.IconInfo.new_for_pixbuf(APPICON_PIXBUF)  # if we needed to wrap a pixbuf into an iconinfo...
 
     win.set_filter(options.filter)
     win.set_animated(options.animate, options.animate_highlight)
