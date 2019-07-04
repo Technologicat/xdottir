@@ -93,7 +93,7 @@ def get_highlight_animation():
         return highlight_animation
 
 def get_active_text(combobox):
-    # http://www.pygtk.org/pygtk2tutorial/sec-ComboBoxAndComboboxEntry.html
+    # https://python-gtk-3-tutorial.readthedocs.io/en/latest/combobox.html
     model = combobox.get_model()
     active = combobox.get_active()
     if active < 0:
