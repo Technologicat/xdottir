@@ -17,7 +17,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 # Big thanks to IOhannes m zmölnig for converting his fork to Gtk 3, which helped a lot in
 # getting this fork working again.
