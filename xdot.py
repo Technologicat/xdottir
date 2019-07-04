@@ -2913,7 +2913,7 @@ class DotWindow(Gtk.Window):
             retcode = os.system("sensible-browser \"%s\"" % link)
             return (retcode == 0)
 
-        about = Gtk.AboutDialog()
+        about = Gtk.AboutDialog(parent=self)
         try:
             about.connect("activate-link", open_url)
         except TypeError:  # old PyGTK (2.17) doesn't have activate-link
