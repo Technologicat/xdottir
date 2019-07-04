@@ -355,7 +355,7 @@ class TextShape(Shape):
             # see http://lists.freedesktop.org/archives/cairo/2007-February/009688.html
             context = layout.get_context()
             fo = cairo.FontOptions()
-            fo.set_antialias(cairo.ANTIALIAS_BEST)
+            fo.set_antialias(cairo.ANTIALIAS_GOOD)
             fo.set_hint_style(cairo.HINT_STYLE_NONE)
             fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
             try:
@@ -372,7 +372,7 @@ class TextShape(Shape):
             layout.set_font_description(font)
 
             # set text
-            layout.set_text(self.t)
+            layout.set_text(self.t)  # FIXME: crashes here on Linux Mint 19.1 with ANTIALIAS_BEST, so using ANTIALIAS_GOOD for now.
 
             # cache it
             self.layout = layout
