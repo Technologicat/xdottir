@@ -2877,10 +2877,17 @@ class DotWindow(Gtk.Window):
         for i, f in enumerate(FILTER_CHOICES):
             filter_store.append([f])
             self.combobox_idx_by_name[f] = i
-        self.combobox = Gtk.ComboBox.new_with_model_and_entry(filter_store)
+        self.combobox = Gtk.ComboBox.new_with_model(filter_store)
+        renderer_text = Gtk.CellRendererText()
+        self.combobox.pack_start(renderer_text, True)
+        self.combobox.add_attribute(renderer_text, "text", 0)
+        # Alternatively, can use a ComboBoxText (in which case no need for ListStore):
+        # self.combobox = Gtk.ComboBoxText()
+        # for i, f in enumerate(FILTER_CHOICES):
+        #     self.combobox.append_text(f)
+        #    self.combobox_idx_by_name[f] = i
         self.combobox.connect('changed', self.on_filter_change)
         self.combobox.connect('key-press-event', self.on_key_press_event)
-        self.combobox.set_entry_text_column(0)
 
         item = toolitemify(self.combobox)
         item.set_tooltip_text("Choose GraphViz filter for .dot files\n[Ctrl+I = Focus, Tab = De-focus]")
