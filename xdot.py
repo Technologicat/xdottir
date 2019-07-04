@@ -34,22 +34,6 @@ __license__ = "LGPL v3"
 __version__ = "1.0"
 __status__ = "Production"
 
-# Note: the multiscale sfdp usually requires tweaking -GK=xxx,
-# so it's not useful as an option-free filter.
-#
-__filter_choices__ = ('[None]', 'dot', 'neato', 'twopi', 'circo', 'fdp')
-__no_filter_str__ = '[None]'
-__default_filter__ = 'dot'
-
-# Where to find "xdoticon.png" (application icon). Path, including the trailing slash.
-#
-# The icon is optional; an internal fallback icon is used if the file is not found.
-# Note however, that in order to show an icon in the Unity dock, the icon must
-# be available via the current icon theme; window_set_default_icon() is not enough. See
-# http://askubuntu.com/questions/85601/python-application-has-no-icon-in-unity-launcher
-#
-__icon_path__ = "./"
-
 import os
 import sys
 import subprocess
@@ -75,16 +59,34 @@ from gi.repository import Pango
 from gi.repository import PangoCairo
 import cairo
 
-# See http://www.graphviz.org/pub/scm/graphviz-cairo/plugin/cairo/gvrender_cairo.c
+# Note: the multiscale sfdp usually requires tweaking -GK=xxx,
+# so it's not useful as an option-free filter.
+#
+FILTER_CHOICES = ('[None]', 'dot', 'neato', 'twopi', 'circo', 'fdp')
+NO_FILTER_STR = '[None]'
+DEFAULT_FILTER = 'dot'
 
-# For pygtk inspiration and guidance see:
-# - http://mirageiv.berlios.de/
-# - http://comix.sourceforge.net/
+# Where to find "xdoticon.png" (application icon). Path, including the trailing slash.
+#
+# The icon is optional; an internal fallback icon is used if the file is not found.
+# Note however, that in order to show an icon in the Unity dock, the icon must
+# be available via the current icon theme; window_set_default_icon() is not enough. See
+# http://askubuntu.com/questions/85601/python-application-has-no-icon-in-unity-launcher
+#
+ICON_PATH = "./"
+
+
+# See
+# http://www.graphviz.org/pub/scm/graphviz-cairo/plugin/cairo/gvrender_cairo.c
+# As for Gtk 3 and Python:
+# https://lazka.github.io/pgi-docs/    <-- PyGObject API reference
+# https://python-gtk-3-tutorial.readthedocs.io/en/latest/
+# And Gtk 3 itself:
+# https://developer.gnome.org/gtk3/stable/
 
 
 def get_highlight_animation():
     """Return currently running highlight animation object, or None if none."""
-    global highlight_animation
     if "highlight_animation" not in globals():
         return None
     else:
@@ -204,9 +206,6 @@ class Pen:
 
         # For this, we use the system highlight color as-is.
         #
-        global highlight_base
-        global highlight_light
-
         pen.color = highlight_base
         pen.fillcolor = highlight_light
 #        pen.color = (1, 0, 0, 1)   # DEBUG
@@ -230,9 +229,6 @@ class Pen:
         # of the object (at least in a collection of similarly colored objects)
         # even though it is highlighted.
         #
-        global highlight_base
-        global highlight_light
-
         pen.color = mix_colors(highlight_base, self.color, 0.3)
         pen.fillcolor = mix_colors(highlight_light, self.fillcolor, 0.3)
 
@@ -1948,9 +1944,6 @@ class ZoomAreaAction(DragAction):
     def draw(self, cr):
         cr.save()
 
-        global highlight_base
-        global highlight_light
-
         # cr.set_source_rgba(.5, .5, 1.0, 0.25)
         highlight_base_translucent = list(highlight_base[:-1])
         highlight_base_translucent.append(0.25)
@@ -1988,8 +1981,7 @@ class DotWidget(Gtk.DrawingArea):
         'clicked': (GObject.SignalFlags.RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, Gdk.Event))
     }
 
-    global __default_filter__
-    filter = __default_filter__  # set default filter (see also main())
+    filter = DEFAULT_FILTER  # set default filter (see also main())
 
     def __init__(self, parent):
         Gtk.DrawingArea.__init__(self)
@@ -2312,7 +2304,6 @@ class DotWidget(Gtk.DrawingArea):
         self.queue_draw()
 
     def reset_highlight_system(self):
-        global highlight_animation
         if get_highlight_animation() is not None:
             highlight_animation.stop()
         self.highlight = None
@@ -2884,7 +2875,7 @@ class DotWindow(Gtk.Window):
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/combobox.html
         filter_store = Gtk.ListStore(str)
         self.combobox_idx_by_name = {}
-        for i, f in enumerate(__filter_choices__):
+        for i, f in enumerate(FILTER_CHOICES):
             filter_store.append([f])
             self.combobox_idx_by_name[f] = i
         self.combobox = Gtk.ComboBox.new_with_model_and_entry(filter_store)
@@ -3322,9 +3313,8 @@ class DotWindow(Gtk.Window):
         # Set GraphViz filter name for reading .dot files.
 
         # Validate.
-        global __filter_choices__
-        if filter is not None and filter not in __filter_choices__:
-            choices_str = reduce(lambda a, b: a + ', ' + b, __filter_choices__)
+        if filter is not None and filter not in FILTER_CHOICES:
+            choices_str = reduce(lambda a, b: a + ', ' + b, FILTER_CHOICES)
             error_msg = "set_filter(): filter '%s' is not known. Valid filters: %s." % (filter, choices_str)
 
             dialog = Gtk.MessageDialog(parent=self, flags=0,
@@ -3338,11 +3328,7 @@ class DotWindow(Gtk.Window):
 #            raise ValueError(error_msg)
 
         # map the special value None
-        if filter is None:
-            global __no_filter_str__
-            guiname = __no_filter_str__
-        else:
-            guiname = filter
+        guiname = filter or NO_FILTER_STR
 
         self.combobox.set_active(self.combobox_idx_by_name[guiname])
         self.dot_widget.set_filter(filter)
@@ -3351,8 +3337,7 @@ class DotWindow(Gtk.Window):
         filter = get_active_text(combobox)
 
         # map the special value None
-        global __no_filter_str__
-        if filter == __no_filter_str__:
+        if filter == NO_FILTER_STR:
             filter = None
 
         self.set_filter(filter)
@@ -3505,15 +3490,12 @@ def main():
         usage='\n\t%prog [file, or "-" to force stdin on TTY]',
         version='%%prog %s' % __version__)
 
-    global __filter_choices__
-    global __default_filter__
-    global __no_filter_str__
-    choices = [s for s in __filter_choices__ if s != __no_filter_str__]
+    choices = [s for s in FILTER_CHOICES if s != NO_FILTER_STR]
     choices_str = reduce(lambda a, b: a + ', ' + b, choices)
     parser.add_option(
         '-f', '--filter',
         type='choice', choices=choices,
-        dest='filter', default=__default_filter__,
+        dest='filter', default=DEFAULT_FILTER,
         help='graphviz filter: one of %s [default: %%default]. This is the filter chosen upon startup; it can be changed from the GUI.' % choices_str)
     parser.add_option(
         '-n', '--no-filter',
@@ -3553,8 +3535,8 @@ def main():
 
     # Set the application icon
     #
-    global __icon_path__
-    icon_file = "%sxdoticon.png" % __icon_path__
+    global ICON_PATH
+    icon_file = "%sxdoticon.png" % ICON_PATH
     icon_loaded = False
     if os.path.isfile(icon_file):
         try:
@@ -3570,7 +3552,7 @@ def main():
     #win.set_icon_list([None, None, None, APPICON_PIXBUF, None])  # 24, 32, 48, 64, 96  # this should work, but None is not accepted.
     # https://developer.gnome.org/gtk3/stable/GtkIconTheme.html
     thm = Gtk.IconTheme.get_default()
-    Gtk.IconTheme.add_resource_path(thm, __icon_path__)
+    Gtk.IconTheme.add_resource_path(thm, ICON_PATH)
     # iconinfo = Gtk.IconInfo.new_for_pixbuf(APPICON_PIXBUF)  # if we needed to wrap a pixbuf into an iconinfo...
 
     win.set_filter(options.filter)
