@@ -38,7 +38,7 @@ __status__ = "Production"
 # so it's not useful as an option-free filter.
 #
 __filter_choices__ = ('[None]', 'dot', 'neato', 'twopi', 'circo', 'fdp')
-__no_filter_str__  = '[None]'
+__no_filter_str__ = '[None]'
 __default_filter__ = 'dot'
 
 # Where to find "xdoticon.png" (application icon). Path, including the trailing slash.
@@ -109,20 +109,20 @@ def mix_colors(rgb1, rgb2, t):
 
     """
     if len(rgb1) > 3:
-        R1,G1,B1,A1 = rgb1
-        R2,G2,B2,A2 = rgb2
-        R = (1.0 - t)*R1 + t*R2
-        G = (1.0 - t)*G1 + t*G2
-        B = (1.0 - t)*B1 + t*B2
-        A = (1.0 - t)*A1 + t*A2
-        return (R,G,B,A)
+        R1, G1, B1, A1 = rgb1
+        R2, G2, B2, A2 = rgb2
+        R = (1.0 - t) * R1 + t * R2
+        G = (1.0 - t) * G1 + t * G2
+        B = (1.0 - t) * B1 + t * B2
+        A = (1.0 - t) * A1 + t * A2
+        return (R, G, B, A)
     else:
-        R1,G1,B1 = rgb1
-        R2,G2,B2 = rgb2
-        R = (1.0 - t)*R1 + t*R2
-        G = (1.0 - t)*G1 + t*G2
-        B = (1.0 - t)*B1 + t*B2
-        return (R,G,B)
+        R1, G1, B1 = rgb1
+        R2, G2, B2 = rgb2
+        R = (1.0 - t) * R1 + t * R2
+        G = (1.0 - t) * G1 + t * G2
+        B = (1.0 - t) * B1 + t * B2
+        return (R, G, B)
 
 
 def setup_highlight_color(gtkobject):
@@ -166,12 +166,12 @@ def setup_highlight_color(gtkobject):
         #     color_light = Gdk.Color(53951, 58126, 63317)
 
         # This default is extracted from GNOME 2.30.2 in Debian Stable, August 2012.
-        color_base  = Gdk.Color(34438, 43947, 55769)
+        color_base = Gdk.Color(34438, 43947, 55769)
         color_light = Gdk.Color(53951, 58126, 63317)
 
         alp = 1.0  # translucency (1.0 = opaque)
-        highlight_base = (color_base.red/65535.0, color_base.green/65535.0, color_base.blue/65535.0, alp)
-        highlight_light = (color_light.red/65535.0, color_light.green/65535.0, color_light.blue/65535.0, alp)
+        highlight_base = (color_base.red / 65535.0, color_base.green / 65535.0, color_base.blue / 65535.0, alp)
+        highlight_light = (color_light.red / 65535.0, color_light.green / 65535.0, color_light.blue / 65535.0, alp)
 
 
 class Pen:
@@ -231,8 +231,8 @@ class Pen:
         global highlight_base
         global highlight_light
 
-        pen.color = mix_colors( highlight_base, self.color, 0.3 )
-        pen.fillcolor = mix_colors( highlight_light, self.fillcolor, 0.3 )
+        pen.color = mix_colors(highlight_base, self.color, 0.3)
+        pen.fillcolor = mix_colors(highlight_light, self.fillcolor, 0.3)
 
         return pen
 
@@ -250,8 +250,8 @@ class Pen:
 
         """
         # XXX The mixing semantics come directly from mix_colors().
-        tgt.color     = mix_colors( pen1.color,     pen2.color,     t )
-        tgt.fillcolor = mix_colors( pen1.fillcolor, pen2.fillcolor, t )
+        tgt.color = mix_colors(pen1.color, pen2.color, t)
+        tgt.fillcolor = mix_colors(pen1.fillcolor, pen2.fillcolor, t)
 
 class Shape:
     """Abstract base class for all the drawing shapes."""
@@ -276,14 +276,14 @@ class Shape:
         # but only if we can do that (needs the system highlight color
         # to be initialized)).
         #
-        if not hasattr(self, 'highlight_pen_final')  and  "highlight_base" in globals():
+        if not hasattr(self, 'highlight_pen_final') and "highlight_base" in globals():
             # XXX/TODO: Animated highlights are optional.
             # XXX/TODO: When they are disabled, we could save two pens per shape
             # XXX/TODO: if low on memory...
             self.highlight_pen_initial = self.pen.highlighted_initial()
-            self.highlight_pen_final   = self.pen.highlighted_final()
+            self.highlight_pen_final = self.pen.highlighted_final()
             # This pen is used as a scratchpad for mixing the other two during animation.
-            self.highlight_pen_mix     = self.highlight_pen_final.copy()
+            self.highlight_pen_mix = self.highlight_pen_final.copy()
 
         highlight_animation = get_highlight_animation()
         if highlight_animation is not None:
@@ -368,7 +368,7 @@ class TextShape(Shape):
             # set font
             font = Pango.FontDescription()
             font.set_family(self.pen.fontname)  # setting a family here does seem to work. (cf. Times-Roman above, which doesn't)
-            font.set_absolute_size(self.pen.fontsize*Pango.SCALE)
+            font.set_absolute_size(self.pen.fontsize * Pango.SCALE)
             layout.set_font_description(font)
 
             # set text
@@ -379,7 +379,7 @@ class TextShape(Shape):
         else:
             PangoCairo.update_layout(cr, layout)
 
-        descent = 2 # XXX get descender from font metrics (maybe pango_layout_get_baseline would help?)
+        descent = 2  # XXX get descender from font metrics (maybe pango_layout_get_baseline would help?)
 
         # TODO: Is there an actual situation where Pango uses logical_rect
         # TODO: instead of ink_rect to specify the origin offset, as the
@@ -392,7 +392,7 @@ class TextShape(Shape):
         height = exts.logical_rect.height / Pango.SCALE
 
         if exts.logical_rect.x != 0.0 or exts.logical_rect.y != 0.0:
-            print("WARNING: node '%s' has nonzero logical_rect x, y; label may be positioned incorrectly." % t, file=sys.stderr)
+            print("WARNING: node '%s' has nonzero logical_rect x, y; label may be positioned incorrectly." % self.t, file=sys.stderr)
 
         if 0:  # DEBUG
             inkr = [float(getattr(exts.ink_rect, k)) / Pango.SCALE for k in ("x", "y", "width", "height")]
@@ -404,7 +404,7 @@ class TextShape(Shape):
         # scale it so that the text fits inside its box
         if width > self.w:
             f = self.w / width
-            width = self.w # equivalent to width *= f
+            width = self.w  # equivalent to width *= f
             height *= f
             descent *= f
             originx *= f
@@ -415,7 +415,7 @@ class TextShape(Shape):
         if self.j == self.LEFT:
             x = self.x
         elif self.j == self.CENTER:
-            x = self.x - 0.5*width
+            x = self.x - 0.5 * width
         elif self.j == self.RIGHT:
             x = self.x - width
         else:
@@ -441,17 +441,17 @@ class TextShape(Shape):
         PangoCairo.show_layout(cr, layout)
         cr.restore()
 
-        if 0: # DEBUG
+        if 0:  # DEBUG
             # show where dot thinks the text should appear
             cr.set_source_rgba(1, 0, 0, .9)
             if self.j == self.LEFT:
                 x = self.x
             elif self.j == self.CENTER:
-                x = self.x - 0.5*self.w
+                x = self.x - 0.5 * self.w
             elif self.j == self.RIGHT:
                 x = self.x - self.w
             cr.move_to(x, self.y)
-            cr.line_to(x+self.w, self.y)
+            cr.line_to(x + self.w, self.y)
             cr.stroke()
 
 
@@ -469,8 +469,8 @@ class ImageShape(Shape):
     def draw(self, cr, highlight=False):
         cr2 = Gdk.CairoContext(cr)
         pixbuf = Gdk.pixbuf_new_from_file(self.path)
-        sx = float(self.w)/float(pixbuf.get_width())
-        sy = float(self.h)/float(pixbuf.get_height())
+        sx = float(self.w) / float(pixbuf.get_width())
+        sy = float(self.h) / float(pixbuf.get_height())
         cr.save()
         cr.translate(self.x0, self.y0 - self.h)
         cr.scale(sx, sy)
@@ -495,7 +495,7 @@ class EllipseShape(Shape):
         cr.translate(self.x0, self.y0)
         cr.scale(self.w, self.h)
         cr.move_to(1.0, 0.0)
-        cr.arc(0.0, 0.0, 1.0, 0, 2.0*math.pi)
+        cr.arc(0.0, 0.0, 1.0, 0, 2.0 * math.pi)
         cr.restore()
         pen = self.select_pen(highlight, old_highlight)
         if self.filled:
@@ -632,8 +632,8 @@ class Element(CompoundShape):
         #
         # This is used by the Find logic.
         #
-        textshapes = filter( lambda obj: isinstance(obj, TextShape), self.shapes )
-        texts      = list(map( lambda obj: obj.t, textshapes ))
+        textshapes = (x for x in self.shapes if isinstance(x, TextShape))
+        texts = [x.t for x in textshapes]
         return texts
 
 
@@ -645,10 +645,10 @@ class Node(Element):
         self.x = x
         self.y = y
 
-        self.x1 = x - 0.5*w
-        self.y1 = y - 0.5*h
-        self.x2 = x + 0.5*w
-        self.y2 = y + 0.5*h
+        self.x1 = x - 0.5 * w
+        self.y1 = y - 0.5 * h
+        self.x2 = x + 0.5 * w
+        self.y2 = y + 0.5 * h
 
         self.url = url
         self.internal_name = internal_name
@@ -673,7 +673,7 @@ class Node(Element):
 def square_distance(x1, y1, x2, y2):
     deltax = x2 - x1
     deltay = y2 - y1
-    return deltax*deltax + deltay*deltay
+    return deltax * deltax + deltay * deltay
 
 
 class Edge(Element):
@@ -687,9 +687,9 @@ class Edge(Element):
     RADIUS = 10
 
     def get_jump(self, x, y, **kwargs):
-        if square_distance(x, y, *self.points[0]) <= self.RADIUS*self.RADIUS:
+        if square_distance(x, y, *self.points[0]) <= self.RADIUS * self.RADIUS:
             return Jump(self, self.dst.x, self.dst.y, highlight=set([self, self.dst]))
-        if square_distance(x, y, *self.points[-1]) <= self.RADIUS*self.RADIUS:
+        if square_distance(x, y, *self.points[-1]) <= self.RADIUS * self.RADIUS:
             return Jump(self, self.src.x, self.src.y, highlight=set([self, self.src]))
         return None
 
@@ -711,9 +711,9 @@ class Graph(Shape):
         # we can do this because the graph content never changes after
         # the graph (any given, particular graph) is loaded.
         #
-        # format: (node_obj, list_of_text_strings_in_node)
-        self.items_and_texts =       list(map( lambda obj: (obj, obj.get_texts()), self.nodes ))
-        self.items_and_texts.extend( list(map( lambda obj: (obj, obj.get_texts()), self.edges )) )
+        # item format: (node_obj, list_of_text_strings_in_node)
+        self.items_and_texts = [(x, x.get_texts()) for x in self.nodes]
+        self.items_and_texts.extend([(x, x.get_texts()) for x in self.edges])
 
         self.nodes_by_name = {}
         for n in self.nodes:
@@ -775,20 +775,20 @@ class Graph(Shape):
                 #   - DotWidget.update_highlight()
                 #     * keypress handling
                 #
-                if do_highlight is None  or  do_highlight == "from":
-                    linked_edges = list(filter( lambda e: e.src == node, self.edges ))
+                if do_highlight is None or do_highlight == "from":
+                    linked_edges = [e for e in self.edges if e.src == node]
                 else:  # "to" or "to_links_only"
-                    linked_edges = list(filter( lambda e: e.dst == node, self.edges ))
-                jump.highlight.update( linked_edges )
+                    linked_edges = [e for e in self.edges if e.dst == node]
+                jump.highlight.update(linked_edges)
 
                 # Optionally, highlight the linked nodes, too.
                 #
                 if do_highlight == "from":
-                    linked_nodes = list(map( lambda e: e.dst, linked_edges ))
-                    jump.highlight.update( linked_nodes )
+                    linked_nodes = [e.dst for e in linked_edges]
+                    jump.highlight.update(linked_nodes)
                 elif do_highlight == "to":
-                    linked_nodes = list(map( lambda e: e.src, linked_edges ))
-                    jump.highlight.update( linked_nodes )
+                    linked_nodes = [e.src for e in linked_edges]
+                    jump.highlight.update(linked_nodes)
 
                 return jump
         return None
@@ -802,23 +802,23 @@ class Graph(Shape):
         if len(text) == 0:
             return []
 
-        def match_text(term, texts): # str, list of str
+        def match_text(term, texts):  # str, list of str
             # Return true if "term" is contained in at least one string of the list "texts".
 
             # case-sensitive match
-#            return any( filter( lambda t: t.find(term) != -1, texts ) )
+            # return any(filter(lambda t: t.find(term) != -1, texts))
 
             # case-insensitive match (user-friendly)
             #
             # regex version (would require UI for handling regex parse errors)
-#            return any( filter( lambda t: re.search(term,t,re.IGNORECASE) is not None, texts ) )
+            # return any(filter(lambda t: re.search(term,t,re.IGNORECASE) is not None, texts))
             #
             # non-regex version
             term = term.lower()
-            return any( filter( lambda t: t.lower().find(term) != -1, texts ) )
+            return any(t for t in texts if t.lower().find(term) != -1)
 
-        matching_pairs = filter( lambda o: match_text(text, o[1]), self.items_and_texts )
-        matching_items = list(map( lambda o: o[0], matching_pairs ))  # discard text lists
+        matching_pairs = (o for o in self.items_and_texts if match_text(text, o[1]))
+        matching_items = [o[0] for o in matching_pairs]  # discard text lists
 
         return matching_items
 
@@ -852,7 +852,7 @@ class XDotAttrParser:
         # Newer versions of GraphViz (e.g. 2.36.0 (20140111.2315) in Ubuntu 14.04) may generate
         # float positions and sizes.
         #
-#        return int(self.read_code())
+        # return int(self.read_code())
         return int(self.read_float())
 
     def read_float(self):
@@ -885,7 +885,7 @@ class XDotAttrParser:
         c = self.read_text()
         c1 = c[:1]
         if c1 == '#':
-            hex2float = lambda h: float(int(h, 16)/255.0)
+            hex2float = lambda h: float(int(h, 16) / 255.0)  # noqa: E731
             r = hex2float(c[1:3])
             g = hex2float(c[3:5])
             b = hex2float(c[5:7])
@@ -909,10 +909,10 @@ class XDotAttrParser:
         except ValueError:
             pass
         else:
-            s = 1.0/65535.0
-            r = color.red*s
-            g = color.green*s
-            b = color.blue*s
+            s = 1.0 / 65535.0
+            r = color.red * s
+            g = color.green * s
+            b = color.blue * s
             a = 1.0
             return r, g, b, a
 
@@ -922,10 +922,10 @@ class XDotAttrParser:
         except (ValueError, KeyError):
             pass
         else:
-            s = 1.0/255.0
-            r = r*s
-            g = g*s
-            b = b*s
+            s = 1.0 / 255.0
+            r = r * s
+            g = g * s
+            b = b * s
             a = 1.0
             return r, g, b, a
 
@@ -1067,7 +1067,7 @@ class ParseError(Exception):
         self.col = col
 
     def __str__(self):
-        return ':'.join([str(part) for part in (self.filename, self.line, self.col, self.msg) if part != None])
+        return ':'.join([str(part) for part in (self.filename, self.line, self.col, self.msg) if part is not None])
 
 
 class Scanner:
@@ -1083,10 +1083,8 @@ class Scanner:
         flags = re.DOTALL
         if self.ignorecase:
             flags |= re.IGNORECASE
-        self.tokens_re = re.compile(
-            '|'.join(['(' + regexp + ')' for type, regexp, test_lit in self.tokens]),
-             flags
-        )
+        self.tokens_re = re.compile('|'.join(['(' + regexp + ')' for type, regexp, test_lit in self.tokens]),
+                                    flags)
 
     def next(self, buf, pos):
         if pos >= len(buf):
@@ -1121,13 +1119,13 @@ class Lexer:
 
     newline_re = re.compile(r'\r\n?|\n')
 
-    def __init__(self, buf = None, pos = 0, filename = None, fp = None):
+    def __init__(self, buf=None, pos=0, filename=None, fp=None):
         if fp is not None:
             try:
                 fileno = fp.fileno()
                 length = os.path.getsize(fp.name)
                 import mmap
-            except:
+            except Exception:  # FIXME: which exceptions?
                 # read whole file into memory
                 buf = fp.read()
                 pos = 0
@@ -1135,7 +1133,7 @@ class Lexer:
                 # map the whole file into memory
                 if length:
                     # length must not be zero
-                    buf = mmap.mmap(fileno, length, access = mmap.ACCESS_READ)
+                    buf = mmap.mmap(fileno, length, access=mmap.ACCESS_READ)
                     pos = os.lseek(fileno, 0, 1)
                 else:
                     buf = ''
@@ -1177,7 +1175,7 @@ class Lexer:
                 raise ParseError(msg, self.filename, line, col)
             else:
                 break
-        return Token(type = type, text = text, line = line, col = col)
+        return Token(type=type, text=text, line=line, col=col)
 
     def consume(self, text):
         # update line number
@@ -1193,7 +1191,7 @@ class Lexer:
             if tabpos == -1:
                 break
             self.col += tabpos - pos
-            self.col = ((self.col - 1)//self.tabsize + 1)*self.tabsize + 1
+            self.col = ((self.col - 1) // self.tabsize + 1) * self.tabsize + 1
             pos = tabpos + 1
         self.col += len(text) - pos
 
@@ -1207,10 +1205,10 @@ class Parser:
     def match(self, type):
         if self.lookahead.type != type:
             raise ParseError(
-                msg = 'unexpected token %r' % self.lookahead.text,
-                filename = self.lexer.filename,
-                line = self.lookahead.line,
-                col = self.lookahead.col)
+                msg='unexpected token %r' % self.lookahead.text,
+                filename=self.lexer.filename,
+                line=self.lookahead.line,
+                col=self.lookahead.col)
 
     def skip(self, type):
         while self.lookahead.type != type:
@@ -1248,6 +1246,7 @@ SUBGRAPH = 18
 class DotScanner(Scanner):
 
     # token regular expression table
+    # item format: (type, regex, test_lit), see Scanner class
     tokens = [
         # whitespace and comments
         (SKIP,
@@ -1255,7 +1254,7 @@ class DotScanner(Scanner):
             r'//[^\r\n]*|'
             r'/\*.*?\*/|'
             r'#[^\r\n]*',
-        False),
+         False),
 
         # Alphanumeric IDs
         (ID, r'[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*', True),
@@ -1452,7 +1451,7 @@ class DotParser(Parser):
 class XDotParser(DotParser):
 
     def __init__(self, xdotcode):
-        lexer = DotLexer(buf = xdotcode)
+        lexer = DotLexer(buf=xdotcode)
         DotParser.__init__(self, lexer)
 
         self.nodes = []
@@ -1479,7 +1478,7 @@ class XDotParser(DotParser):
             self.yscale = -1.0
             # FIXME: scale from points to pixels
 
-            self.width  = max(xmax - xmin, 1)
+            self.width = max(xmax - xmin, 1)
             self.height = max(ymax - ymin, 1)
 
             self.top_graph = False
@@ -1496,8 +1495,8 @@ class XDotParser(DotParser):
             return
 
         x, y = self.parse_node_pos(pos)
-        w = float(attrs.get('width', 0))*72
-        h = float(attrs.get('height', 0))*72
+        w = float(attrs.get('width', 0)) * 72  # FIXME: 72? Typical old CRT DPI?
+        h = float(attrs.get('height', 0)) * 72
         shapes = []
         for attr in ("_draw_", "_ldraw_"):
             if attr in attrs:
@@ -1550,14 +1549,14 @@ class XDotParser(DotParser):
 
     def transform(self, x, y):
         # XXX: this is not the right place for this code
-        x = (x + self.xoffset)*self.xscale
-        y = (y + self.yoffset)*self.yscale
+        x = (x + self.xoffset) * self.xscale
+        y = (y + self.yoffset) * self.yscale
         return x, y
 
 
 class Animation(object):
 
-    step = 0.03 # seconds
+    step = 0.03  # seconds
 
     def __init__(self, dot_widget):
         self.dot_widget = dot_widget
@@ -1632,7 +1631,7 @@ class ExpDecayAnimation(Animation):
 
         # Sharpness (decay time constant).
         #
-        self.c  = 4.0
+        self.c = 4.0
 
         # Upper and lower limits for normalization.
         #
@@ -1648,7 +1647,7 @@ class ExpDecayAnimation(Animation):
 
         # Remap t nonlinearly. Both the input and output are in [0,1].
         #
-        t = 1.0 - (math.exp( -self.c * t ) - self.ll) / (self.ul - self.ll)
+        t = 1.0 - (math.exp(-self.c * t) - self.ll) / (self.ul - self.ll)
         t = max(0, min(t, 1))
         self.t = t
 
@@ -1694,12 +1693,12 @@ class TanhAnimation(Animation):
         # and 10.0 (animation starts at t ~ 0.2, ends at t ~ 0.8)
         # are recommended. If you don't know what to put here, 6.0 is good.
         #
-        self.c  = 4.0
+        self.c = 4.0
 
         # Upper and lower limits for normalization.
         #
-        self.ul = (1.+math.tanh( self.c/2.))/2.
-        self.ll = (1.+math.tanh(-self.c/2.))/2.
+        self.ul = (1. + math.tanh(self.c / 2.)) / 2.
+        self.ll = (1. + math.tanh(-self.c / 2.)) / 2.
 
         self.jumpstart = jumpstart
 
@@ -1711,14 +1710,14 @@ class TanhAnimation(Animation):
         t = (time.time() - self.started) / self.duration
         if self.jumpstart:
             # jumpstart mode uses only second half of the function.
-            t = 0.5 + t/2.
+            t = 0.5 + t / 2.
 
         # Remap t nonlinearly. Both the input and output are in [0,1].
         #
-        t = ( (1.+math.tanh(self.c*(t - 0.5)))/2. - self.ll ) / ( self.ul - self.ll )
+        t = ((1. + math.tanh(self.c * (t - 0.5))) / 2. - self.ll) / (self.ul - self.ll)
 
         if self.jumpstart:
-            t = (t - 0.5)*2.
+            t = (t - 0.5) * 2.
 
         t = max(0, min(t, 1))
         self.t = t
@@ -1743,8 +1742,8 @@ class MoveToAnimation(TanhAnimation):
     def animate(self, t):
         sx, sy = self.source_x, self.source_y
         tx, ty = self.target_x, self.target_y
-        self.dot_widget.x = tx * t + sx * (1-t)
-        self.dot_widget.y = ty * t + sy * (1-t)
+        self.dot_widget.x = tx * t + sx * (1 - t)
+        self.dot_widget.y = ty * t + sy * (1 - t)
         self.dot_widget.queue_draw()
 
 
@@ -1773,8 +1772,8 @@ class ZoomToAnimation(MoveToAnimation):
         # This makes the transition look smoother (unless it's an arrow key pan, which
         # should be a pure pan; that's why this can be disabled from the calling end).
         #
-        if distance > 0  and  allow_extra_zoom:
-#            desired_middle_zoom = visible / distance   # original xdot
+        if distance > 0 and allow_extra_zoom:
+            # desired_middle_zoom = visible / distance   # original xdot
 
             # note: zoom factor => smaller values = further out
             q = distance / visible  # possible range: (0, +infty)
@@ -1786,7 +1785,7 @@ class ZoomToAnimation(MoveToAnimation):
             #   - the formula should reduce to 1.0 * middle_zoom for q=0.
             #   - the **2.0: do almost nothing when q is "small".
             #
-            desired_middle_zoom = 1.0/min( 1.0 + (q**2.0), 2.0 ) * middle_zoom
+            desired_middle_zoom = 1.0 / min(1.0 + (q**2.0), 2.0) * middle_zoom
 
 #            # XXX TEST: Don't automatically zoom further out than "zoom to fit" does,
 #            # unless source or target is further out than that.
@@ -1808,7 +1807,7 @@ class ZoomToAnimation(MoveToAnimation):
         #   source_zoom at t=0
         #   desired_middle_zoom at t=0.5
         #   target_zoom at t=1
-        self.dot_widget.zoom_ratio = c*t + b*t*(1-t) + a*(1-t)
+        self.dot_widget.zoom_ratio = c * t + b * t * (1 - t) + a * (1 - t)
 
         # XXX Why was the zoom to fit flag disabled here?
         # XXX
@@ -1906,7 +1905,7 @@ class NullAction(DragAction):
             dot_widget.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.HAND2))
             dot_widget.set_highlight(item.highlight)
         else:
-#            dot_widget.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
+            # dot_widget.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
             dot_widget.get_window().set_cursor(None)  # inherit cursor from parent window!
             dot_widget.set_highlight(None)
 
@@ -1922,7 +1921,7 @@ class PanAction(DragAction):
         self.dot_widget.queue_draw()
 
     def stop(self):
-#        self.dot_widget.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
+        # self.dot_widget.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
         self.dot_widget.get_window().set_cursor(None)  # inherit cursor from parent window!
 
     abort = stop
@@ -1950,15 +1949,15 @@ class ZoomAreaAction(DragAction):
         global highlight_base
         global highlight_light
 
-#        cr.set_source_rgba(.5, .5, 1.0, 0.25)
+        # cr.set_source_rgba(.5, .5, 1.0, 0.25)
         highlight_base_translucent = list(highlight_base[:-1])
-        highlight_base_translucent.append( 0.25 )
+        highlight_base_translucent.append(0.25)
         cr.set_source_rgba(*highlight_base_translucent)
         cr.rectangle(self.startmousex, self.startmousey,
                      self.prevmousex - self.startmousex,
                      self.prevmousey - self.startmousey)
         cr.fill()
-#        cr.set_source_rgba(.5, .5, 1.0, 1.0)
+        # cr.set_source_rgba(.5, .5, 1.0, 1.0)
         highlight_base_translucent[-1] = 0.7
         cr.set_source_rgba(*highlight_base_translucent)
         cr.set_line_width(1)
@@ -1983,8 +1982,8 @@ class DotWidget(Gtk.DrawingArea):
     """PyGTK widget that draws dot graphs."""
 
     __gsignals__ = {
-#        'draw': 'override',
-        'clicked' : (GObject.SignalFlags.RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, Gdk.Event))
+        # 'draw': 'override',
+        'clicked': (GObject.SignalFlags.RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, Gdk.Event))
     }
 
     global __default_filter__
@@ -2087,8 +2086,8 @@ class DotWidget(Gtk.DrawingArea):
                 plural_s = "s" if n_excess != 1 else ""
 
                 pos = error.find('\n')
-                for j in range(max_lines-1):
-                    pos = error.find('\n', pos+1)
+                for j in range(max_lines - 1):
+                    pos = error.find('\n', pos + 1)
                 error = error[0:pos]  # max_lines lines, without last linefeed
                 error += "\n... <%d more line%s> ...\n\nLong error message truncated. Run in terminal to capture full output." % (n_excess, plural_s)
             dialog = Gtk.MessageDialog(parent=self.parent, flags=0,
@@ -2122,7 +2121,7 @@ class DotWidget(Gtk.DrawingArea):
         self.zoom_to_fit(animate=False)
 
     def set_dotcode(self, dotcode, filename=None, zoom_to_fit=True):
-        if self.filter is not None  and  filename is not None:
+        if self.filter is not None and filename is not None:
             self.set_graph_from_message("[Running layout filter '%s' on '%s'...]" % (self.filter, os.path.basename(filename)))
             while Gtk.events_pending():
                 Gtk.main_iteration_do(True)
@@ -2184,12 +2183,12 @@ class DotWidget(Gtk.DrawingArea):
         # (parsed successfully) but the graph does not contain any nodes.
         # E.g. the empty graph "digraph G { }" triggers this case.
         #
-        if len(xdotcode) == 0  or  len(self.graph.nodes) < 1:
+        if len(xdotcode) == 0 or len(self.graph.nodes) < 1:
             self.set_graph_from_message("[Empty input]")
             self.openfilename = None
         else:
             if zoom_to_fit:
-#                self.zoom_image(self.zoom_ratio, center=True)
+                # self.zoom_image(self.zoom_ratio, center=True)
                 self.zoom_to_fit(animate=False)
         return True  # be consistent! (cf. set_dotcode() and callers for both in DotWindow)
 
@@ -2197,8 +2196,8 @@ class DotWidget(Gtk.DrawingArea):
         if self.openfilename is not None:
             self.update_disabled = True  # don't try to auto-reload while already reloading :)
             # Remember view position and zoom over reload
-            temp_x  = self.target_x
-            temp_y  = self.target_y
+            temp_x = self.target_x
+            temp_y = self.target_y
             temp_zr = self.target_zoom_ratio
             # The loading messages will overwrite the self.zoom_to_fit_on_resize state
             # temporarily, so we must save and restore it.
@@ -2238,11 +2237,11 @@ class DotWidget(Gtk.DrawingArea):
                 self.reload_callback()
 
             # Remember view position and zoom over reload
-            self.x                 = temp_x
-            self.y                 = temp_y
-            self.zoom_ratio        = temp_zr
-            self.target_x          = temp_x
-            self.target_y          = temp_y
+            self.x = temp_x
+            self.y = temp_y
+            self.zoom_ratio = temp_zr
+            self.target_x = temp_x
+            self.target_y = temp_y
             self.target_zoom_ratio = temp_zr
             self.zoom_to_fit_on_resize = temp_ztf_on_resize
             self.queue_draw()
@@ -2281,7 +2280,7 @@ class DotWidget(Gtk.DrawingArea):
 
         context.save()
         rect = self.get_allocation()
-        context.translate(0.5*rect.width, 0.5*rect.height)
+        context.translate(0.5 * rect.width, 0.5 * rect.height)
         context.scale(self.zoom_ratio, self.zoom_ratio)
         context.translate(-self.x, -self.y)
 
@@ -2340,14 +2339,14 @@ class DotWidget(Gtk.DrawingArea):
     def zoom_image(self, zoom_ratio, center=False, pos=None, animate=True):
         pan = False
         if center:
-            target_x = self.graph.width/2
-            target_y = self.graph.height/2
+            target_x = self.graph.width / 2
+            target_y = self.graph.height / 2
             pan = True
         elif pos is not None:
             rect = self.get_allocation()
             x, y = pos
-            x -= 0.5*rect.width
-            y -= 0.5*rect.height
+            x -= 0.5 * rect.width
+            y -= 0.5 * rect.height
             target_x = self.x + x / self.zoom_ratio - x / zoom_ratio
             target_y = self.y + y / self.zoom_ratio - y / zoom_ratio
             pan = True
@@ -2374,8 +2373,8 @@ class DotWidget(Gtk.DrawingArea):
         height = abs(y1 - y2)
         try:
             zoom_ratio = min(
-                float(rect.width)/float(width),
-                float(rect.height)/float(height)
+                float(rect.width) / float(width),
+                float(rect.height) / float(height)
             )
             self.zoom_to_fit_on_resize = False
             target_x = (x1 + x2) / 2
@@ -2403,8 +2402,8 @@ class DotWidget(Gtk.DrawingArea):
         rect.width -= 2 * self.ZOOM_TO_FIT_MARGIN
         rect.height -= 2 * self.ZOOM_TO_FIT_MARGIN
         zoom_ratio = min(
-            float(rect.width)/float(self.graph.width),
-            float(rect.height)/float(self.graph.height)
+            float(rect.width) / float(self.graph.width),
+            float(rect.height) / float(self.graph.height)
         )
         return zoom_ratio
 
@@ -2441,7 +2440,7 @@ class DotWidget(Gtk.DrawingArea):
 
     def on_key_press_event(self, widget, event):
         if event.keyval == Gdk.keyval_from_name("Left"):
-            target_x = self.target_x - self.POS_INCREMENT/self.zoom_ratio
+            target_x = self.target_x - self.POS_INCREMENT / self.zoom_ratio
             if self.animate:
                 # Must disable extra zoom (out-and-back-in); not doing that
                 # would make the pan zoom out uncontrollably when the same
@@ -2457,7 +2456,7 @@ class DotWidget(Gtk.DrawingArea):
             self.queue_draw()
             return True
         if event.keyval == Gdk.keyval_from_name("Right"):
-            target_x = self.target_x + self.POS_INCREMENT/self.zoom_ratio
+            target_x = self.target_x + self.POS_INCREMENT / self.zoom_ratio
             if self.animate:
                 self.animate_to(target_x, self.y, allow_extra_zoom=False)
             else:
@@ -2466,7 +2465,7 @@ class DotWidget(Gtk.DrawingArea):
             self.queue_draw()
             return True
         if event.keyval == Gdk.keyval_from_name("Up"):
-            target_y = self.target_y - self.POS_INCREMENT/self.zoom_ratio
+            target_y = self.target_y - self.POS_INCREMENT / self.zoom_ratio
             if self.animate:
                 self.animate_to(self.x, target_y, allow_extra_zoom=False)
             else:
@@ -2475,7 +2474,7 @@ class DotWidget(Gtk.DrawingArea):
             self.queue_draw()
             return True
         if event.keyval == Gdk.keyval_from_name("Down"):
-            target_y = self.target_y + self.POS_INCREMENT/self.zoom_ratio
+            target_y = self.target_y + self.POS_INCREMENT / self.zoom_ratio
             if self.animate:
                 self.animate_to(self.x, target_y, allow_extra_zoom=False)
             else:
@@ -2525,7 +2524,7 @@ class DotWidget(Gtk.DrawingArea):
     def on_key_release_event(self, widget, event):
         # WTF? In Ubuntu 12.04 LTS, GTK seems to be very lazy in sending key release events
         # for pure modifiers. A release may take several seconds to register...
-#        print Gdk.keyval_name(event.keyval)   # DEBUG
+        # print Gdk.keyval_name(event.keyval)   # DEBUG
 
         # Releasing modifiers may change the highlight set.
         self.update_highlight(event, mode="release")
@@ -2543,10 +2542,10 @@ class DotWidget(Gtk.DrawingArea):
         #
         # (ISO level 3 shift = AltGr in scandinavic keyboards.)
         #
-        if event.keyval not in [ Gdk.keyval_from_name("Shift_L"),   Gdk.keyval_from_name("Shift_R"),
-                                 Gdk.keyval_from_name("Control_L"), Gdk.keyval_from_name("Control_R"),
-                                 Gdk.keyval_from_name("Alt_L"),     Gdk.keyval_from_name("Alt_R"),
-                                 Gdk.keyval_from_name("ISO_Level3_Shift") ]:
+        if event.keyval not in [Gdk.keyval_from_name("Shift_L"), Gdk.keyval_from_name("Shift_R"),
+                                Gdk.keyval_from_name("Control_L"), Gdk.keyval_from_name("Control_R"),
+                                Gdk.keyval_from_name("Alt_L"), Gdk.keyval_from_name("Alt_R"),
+                                Gdk.keyval_from_name("ISO_Level3_Shift")]:
             return
 
         # Given shift/ctrl state, updates the highlight set.
@@ -2559,11 +2558,11 @@ class DotWidget(Gtk.DrawingArea):
         #
         do_highlight = None
         if mode == "press":
-            if event.keyval == Gdk.keyval_from_name("Shift_L")  or  event.keyval == Gdk.keyval_from_name("Shift_R"):
+            if event.keyval == Gdk.keyval_from_name("Shift_L") or event.keyval == Gdk.keyval_from_name("Shift_R"):
                 do_highlight = "from"
-            elif event.keyval == Gdk.keyval_from_name("Control_L")  or  event.keyval == Gdk.keyval_from_name("Control_R"):
+            elif event.keyval == Gdk.keyval_from_name("Control_L") or event.keyval == Gdk.keyval_from_name("Control_R"):
                 do_highlight = "to"
-            else: # alt
+            else:  # alt
                 do_highlight = "to_links_only"
 
         # Note: **NOT** event.window; that would include the toolbar height, and we would get the graph coordinates wrong.
@@ -2576,7 +2575,7 @@ class DotWidget(Gtk.DrawingArea):
 
     def get_drag_action(self, event):
         state = event.state
-        if event.button in (1, 2): # left or middle button
+        if event.button in (1, 2):  # left or middle button
             modifiers = Gtk.accelerator_get_default_mod_mask()
             if state & modifiers == Gdk.ModifierType.CONTROL_MASK:
                 return ZoomAction
@@ -2607,8 +2606,7 @@ class DotWidget(Gtk.DrawingArea):
         # for gtk's clicked event instead?
         deltax = self.pressx - event.x
         deltay = self.pressy - event.y
-        return (time.time() < self.presstime + click_timeout
-                and math.hypot(deltax, deltay) < click_fuzz)
+        return (time.time() < self.presstime + click_timeout and math.hypot(deltax, deltay) < click_fuzz)
 
     def on_area_button_release(self, area, event):
         self.drag_action.on_button_release(event)
@@ -2618,12 +2616,12 @@ class DotWidget(Gtk.DrawingArea):
         # except if a pan/zoom animation is running (in that case,
         # it has already set a target).
         #
-        if not self.animate  or  self.animation is None  or  isinstance(self.animation, NoAnimation)  or  self.animation.get_t() >= 1.0:
+        if not self.animate or self.animation is None or isinstance(self.animation, NoAnimation) or self.animation.get_t() >= 1.0:
             self.target_x = self.x
             self.target_y = self.y
             self.target_zoom_ratio = self.zoom_ratio
 
-        if (event.button == 1  or  event.button == 3) and self.is_click(event):
+        if (event.button == 1 or event.button == 3) and self.is_click(event):
             x, y = int(event.x), int(event.y)
             url = self.get_url(x, y)
             if url is not None:
@@ -2698,7 +2696,7 @@ class DotWidget(Gtk.DrawingArea):
 
         jumpstart = False
         if self.animation is not None:
-            if isinstance(self.animation, ZoomToAnimation)  and  self.animation.get_t() < 1.0:
+            if isinstance(self.animation, ZoomToAnimation) and self.animation.get_t() < 1.0:
                 jumpstart = True
             self.animation.stop()  # this changes self.animation to NoAnimation
 
@@ -2708,8 +2706,8 @@ class DotWidget(Gtk.DrawingArea):
 
     def window2graph(self, x, y):
         rect = self.get_allocation()
-        x -= 0.5*rect.width
-        y -= 0.5*rect.height
+        x -= 0.5 * rect.width
+        y -= 0.5 * rect.height
         x /= self.zoom_ratio
         y /= self.zoom_ratio
         x += self.x
@@ -2785,7 +2783,7 @@ class DotWindow(Gtk.Window):
         window.add(vbox)
 
         self.dot_widget = DotWidget(parent=self)
-        self.dot_widget.set_reload_callback( self.reload_callback )
+        self.dot_widget.set_reload_callback(self.reload_callback)
 
         # Create a UIManager instance
         uimanager = self.uimanager = Gtk.UIManager()
@@ -2808,10 +2806,10 @@ class DotWindow(Gtk.Window):
         #    * then pressing N/FindNext jumps to the first match
         #
         if self.incremental_find:
-            findgo_label   = "Find fir_st"
+            findgo_label = "Find fir_st"
             findgo_tooltip = "Jump to first match [Return]"
         else:
-            findgo_label   = "Run _search"
+            findgo_label = "Run _search"
             findgo_tooltip = "Run the search [Return]"
 
         # Create actions
@@ -2843,9 +2841,9 @@ class DotWindow(Gtk.Window):
 
         # for enable/disable logic
         self.button_find_clear = uimanager.get_widget('/ToolBar/FindClear')
-        self.button_find_go    = uimanager.get_widget('/ToolBar/FindGo')
-        self.button_find_next  = uimanager.get_widget('/ToolBar/FindNext')
-        self.button_find_prev  = uimanager.get_widget('/ToolBar/FindPrev')
+        self.button_find_go = uimanager.get_widget('/ToolBar/FindGo')
+        self.button_find_next = uimanager.get_widget('/ToolBar/FindNext')
+        self.button_find_prev = uimanager.get_widget('/ToolBar/FindPrev')
 
         # Create a text entry for search.
         #
@@ -2863,7 +2861,7 @@ class DotWindow(Gtk.Window):
         self.find_displaying_placeholder = True
         self.matching_items = []
         self.match_idx = -1  # currently focused match
-        self.old_xy = (-1,-1)  # for view reset when clearing
+        self.old_xy = (-1, -1)  # for view reset when clearing
         self.old_zoom = None  # for view reset when clearing
         self.find_last_searched_text = ""
         self.find_entry = Gtk.Entry()
@@ -2884,12 +2882,12 @@ class DotWindow(Gtk.Window):
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/combobox.html
         filter_store = Gtk.ListStore(str)
         self.combobox_idx_by_name = {}
-        for i,f in enumerate(__filter_choices__):
+        for i, f in enumerate(__filter_choices__):
             filter_store.append([f])
             self.combobox_idx_by_name[f] = i
         self.combobox = Gtk.ComboBox.new_with_model_and_entry(filter_store)
-        self.combobox.connect( 'changed', self.on_filter_change )
-        self.combobox.connect( 'key-press-event', self.on_key_press_event )
+        self.combobox.connect('changed', self.on_filter_change)
+        self.combobox.connect('key-press-event', self.on_key_press_event)
         self.combobox.set_entry_text_column(0)
 
         item = toolitemify(self.combobox)
@@ -2908,7 +2906,7 @@ class DotWindow(Gtk.Window):
         self.set_xdotcode(__online_help_xdotcode__)
         n = self.dot_widget.graph.nodes_by_name["welcome"]
         self.dot_widget.zoom_to_fit_on_resize = False
-        self.dot_widget.animate_to( n.x, n.y, 1.0 )
+        self.dot_widget.animate_to(n.x, n.y, 1.0)
 
     def on_about(self, action):
         # The default link opener doesn't seem to work (Ubuntu 12.04 LTS), so we use our own...
@@ -2938,7 +2936,7 @@ class DotWindow(Gtk.Window):
                        "IOhannes m zmölnig - Gtk 3 compatibility help, via his XDot fork\n    https://git.iem.at/zmoelnig/dotterel/blob/master/dotterel.py",
                        "\nThis software uses ColorBrewer Color Schemes\n    by Cynthia Brewer, Mark Harrower, and\n    The Pennsylvania State University;\n    for details, see the license.")
         about.set_authors(author_list)
-        about.set_documenters( ("Juha Jeronen",) )
+        about.set_documenters(("Juha Jeronen",))
 
         about.set_copyright(__copyright__)
         about.set_license(__license_text__)  # see below
@@ -2952,13 +2950,14 @@ class DotWindow(Gtk.Window):
         # FIXME: This stuff is disabled for now. In Gtk3, widgets use CSS styling and have no color attributes themselves.
         # Additionally, in Gtk3, Gtk.STATE_NORMAL is Gtk.StateFlags.NORMAL.
         # https://mail.gnome.org/archives/gtk-app-devel-list/2016-August/msg00021.html
-#        # how to set colors in Gtk2 (old!):
-#        # widget color
-#        entry.modify_base(Gtk.STATE_NORMAL, Gdk.color_parse("#FF0000"))
-#        # frame color
-#        entry.modify_bg(Gtk.STATE_NORMAL, Gdk.color_parse("#0000FF"))
-#        # text color
-#        entry.modify_text(Gtk.STATE_NORMAL, Gdk.color_parse("#00FF00"))
+        # # how to set colors in Gtk2 (old!):
+        # #
+        # # widget color
+        # entry.modify_base(Gtk.STATE_NORMAL, Gdk.color_parse("#FF0000"))
+        # # frame color
+        # entry.modify_bg(Gtk.STATE_NORMAL, Gdk.color_parse("#0000FF"))
+        # # text color
+        # entry.modify_text(Gtk.STATE_NORMAL, Gdk.color_parse("#00FF00"))
 
         # Disable the find buttons until the user enters something to find
         #
@@ -2977,13 +2976,13 @@ class DotWindow(Gtk.Window):
         # The update_disabled check catches the case when a new file is being loaded;
         # in that case the old view position does not matter.
         #
-        if self.match_idx != -1  and  not self.dot_widget.update_disabled:
-#            self.dot_widget.zoom_to_fit()
+        if self.match_idx != -1 and not self.dot_widget.update_disabled:
+            # self.dot_widget.zoom_to_fit()
             self.dot_widget.animate_to(self.old_xy[0], self.old_xy[1], self.old_zoom)
 
         self.matching_items = []
         self.match_idx = -1  # currently focused match
-        self.old_xy = (-1,-1)  # for view reset when clearing
+        self.old_xy = (-1, -1)  # for view reset when clearing
         self.old_zoom = None
         self.find_displaying_placeholder = True
         self.find_last_searched_text = ""
@@ -3000,7 +2999,7 @@ class DotWindow(Gtk.Window):
 
         # Clear the highlight, except if we're currently loading a new file.
         if not self.dot_widget.update_disabled:
-            self.dot_widget.set_highlight( set(self.matching_items) )
+            self.dot_widget.set_highlight(set(self.matching_items))
 
     def prepare_find_field(self):
         # Clear the "Find" field and prepare it for user interaction,
@@ -3022,7 +3021,7 @@ class DotWindow(Gtk.Window):
 
         # Clear the highlight, except if we're currently loading a new file.
         if not self.dot_widget.update_disabled:
-            self.dot_widget.set_highlight( set(self.matching_items) )
+            self.dot_widget.set_highlight(set(self.matching_items))
 
         # If Find has focused something, return view to its original position
         # it had before the first focus.
@@ -3034,12 +3033,12 @@ class DotWindow(Gtk.Window):
         # The update_disabled check catches the case when a new file is being loaded;
         # in that case the old view position does not matter.
         #
-        if self.match_idx != -1  and  not self.dot_widget.update_disabled:
-#            self.dot_widget.zoom_to_fit()
+        if self.match_idx != -1 and not self.dot_widget.update_disabled:
+            # self.dot_widget.zoom_to_fit()
             self.dot_widget.animate_to(self.old_xy[0], self.old_xy[1], self.old_zoom)
 
         self.match_idx = -1  # currently focused match
-        self.old_xy = (-1,-1)  # for view reset when clearing
+        self.old_xy = (-1, -1)  # for view reset when clearing
         self.old_zoom = None
 
         if self.find_displaying_placeholder:
@@ -3074,7 +3073,7 @@ class DotWindow(Gtk.Window):
         # FIXME: Cannot currently de-focus combobox by pressing ESC.
         #
         if self.combobox.is_focus():
-            if event.keyval in [ Gdk.keyval_from_name("Return"), Gdk.keyval_from_name("KP_Enter"), Gdk.keyval_from_name("Escape") ]:
+            if event.keyval in [Gdk.keyval_from_name("Return"), Gdk.keyval_from_name("KP_Enter"), Gdk.keyval_from_name("Escape")]:
                 self.dot_widget.grab_focus()
                 return True
 
@@ -3082,17 +3081,17 @@ class DotWindow(Gtk.Window):
 
         if self.find_entry.is_focus():
             if event.keyval == Gdk.keyval_from_name("Escape"):
-#                # XXX usability TEST
-#                #
-#                # Escape:
-#                #   First press  = clear find term, but wait for a new one
-#                #   Second press = exit focus
-#                already_cleared = (self.find_entry.get_text() == "")
-#                if not already_cleared:
-#                    self.prepare_find_field()
-#                else:
-#                    self.clear_find_field()
-#                    self.dot_widget.grab_focus()
+                # # XXX usability TEST
+                # #
+                # # Escape:
+                # #   First press  = clear find term, but wait for a new one
+                # #   Second press = exit focus
+                # already_cleared = (self.find_entry.get_text() == "")
+                # if not already_cleared:
+                #     self.prepare_find_field()
+                # else:
+                #     self.clear_find_field()
+                #     self.dot_widget.grab_focus()
 
                 # First press = clear and exit focus
                 #
@@ -3103,14 +3102,14 @@ class DotWindow(Gtk.Window):
                 self.dot_widget.grab_focus()
 
                 return True
-            elif event.keyval == Gdk.keyval_from_name("Return")  or  event.keyval == Gdk.keyval_from_name("KP_Enter"):
+            elif event.keyval == Gdk.keyval_from_name("Return") or event.keyval == Gdk.keyval_from_name("KP_Enter"):
                 self.dot_widget.grab_focus()
                 if not self.incremental_find:
                     self.find_and_highlight_matches()  # run the search now
                 self.find_first()
                 return True
         else:
-            if event.keyval == Gdk.keyval_from_name("Return")  or  event.keyval == Gdk.keyval_from_name("KP_Enter"):
+            if event.keyval == Gdk.keyval_from_name("Return") or event.keyval == Gdk.keyval_from_name("KP_Enter"):
                 self.find_first()
                 return True
             if event.keyval == Gdk.keyval_from_name("n"):
@@ -3126,7 +3125,7 @@ class DotWindow(Gtk.Window):
         # Run incremental Find on key release in the Find field.
         #
         if self.find_entry.is_focus():
-            if event.keyval in [ Gdk.keyval_from_name("Escape"), Gdk.keyval_from_name("Return"), Gdk.keyval_from_name("KP_Enter") ]:
+            if event.keyval in [Gdk.keyval_from_name("Escape"), Gdk.keyval_from_name("Return"), Gdk.keyval_from_name("KP_Enter")]:
                 return False
             # Ignore the Ctrl+F that gets us here (and other Ctrl+something key combinations).
             #
@@ -3209,7 +3208,7 @@ class DotWindow(Gtk.Window):
         text = self.find_entry.get_text()
         if text != self.find_last_searched_text:
             self.find_last_searched_text = text
-            self.matching_items = self.dot_widget.graph.filter_items_by_text( text )
+            self.matching_items = self.dot_widget.graph.filter_items_by_text(text)
             self.match_idx = -1  # currently focused match
 
             # Make background of Find light red if nothing matches.
@@ -3230,7 +3229,7 @@ class DotWindow(Gtk.Window):
         # We always highlight the matches, though, to give the user a way to re-highlight them
         # after exploring the graph using the mouse (which destroys the highlight).
         #
-        self.dot_widget.set_highlight( set(self.matching_items) )
+        self.dot_widget.set_highlight(set(self.matching_items))
 
     def find_first(self):
         text = self.find_entry.get_text()
@@ -3242,9 +3241,9 @@ class DotWindow(Gtk.Window):
                 self.button_find_prev.set_sensitive(False)
 
                 self.match_idx = -1  # currently focused match (-1 = none)
-                self.old_xy = (-1,-1)  # for view reset when clearing
+                self.old_xy = (-1, -1)  # for view reset when clearing
                 self.old_zoom = None
-                self.dot_widget.set_highlight( set( [] ) )
+                self.dot_widget.set_highlight(set())
                 return
 
             # Remember original view position.
@@ -3270,8 +3269,8 @@ class DotWindow(Gtk.Window):
 
                 # focus and center the first match
                 node = self.matching_items[self.match_idx]
-                self.dot_widget.set_highlight( set( [node] ) )
-                self.dot_widget.animate_to( node.x, node.y )
+                self.dot_widget.set_highlight({node})
+                self.dot_widget.animate_to(node.x, node.y)
             else:
                 # non-incremental mode:
                 #   - Return/FindGo highlights everything
@@ -3297,8 +3296,8 @@ class DotWindow(Gtk.Window):
 
         # focus and center the next match
         node = self.matching_items[self.match_idx]
-        self.dot_widget.set_highlight( set( [node] ) )
-        self.dot_widget.animate_to( node.x, node.y )
+        self.dot_widget.set_highlight({node})
+        self.dot_widget.animate_to(node.x, node.y)
     def find_prev(self):
         nmatches = len(self.matching_items)
         if nmatches == 0:
@@ -3310,8 +3309,8 @@ class DotWindow(Gtk.Window):
 
         # focus and center the prev match
         node = self.matching_items[self.match_idx]
-        self.dot_widget.set_highlight( set( [node] ) )
-        self.dot_widget.animate_to( node.x, node.y )
+        self.dot_widget.set_highlight({node})
+        self.dot_widget.animate_to(node.x, node.y)
 
     def set_animated(self, animate_view, animate_highlights):
         # Enable/disable UI animations.
@@ -3322,8 +3321,8 @@ class DotWindow(Gtk.Window):
 
         # Validate.
         global __filter_choices__
-        if filter is not None  and  filter not in __filter_choices__:
-            choices_str = reduce( lambda a,b: a + ', ' + b,  __filter_choices__ )
+        if filter is not None and filter not in __filter_choices__:
+            choices_str = reduce(lambda a, b: a + ', ' + b, __filter_choices__)
             error_msg = "set_filter(): filter '%s' is not known. Valid filters: %s." % (filter, choices_str)
 
             dialog = Gtk.MessageDialog(parent=self, flags=0,
@@ -3343,7 +3342,7 @@ class DotWindow(Gtk.Window):
         else:
             guiname = filter
 
-        self.combobox.set_active( self.combobox_idx_by_name[guiname] )
+        self.combobox.set_active(self.combobox_idx_by_name[guiname])
         self.dot_widget.set_filter(filter)
 
     def on_filter_change(self, combobox):
@@ -3356,7 +3355,7 @@ class DotWindow(Gtk.Window):
 
         self.set_filter(filter)
         filename = self.dot_widget.openfilename
-        if filename is not None  and  filter is not None:
+        if filename is not None and filter is not None:
             # XXX HACK: always load xdot files without filter; otherwise use specified filter
             if os.path.splitext(filename)[1] != ".xdot":
                 self.dot_widget.reload()
@@ -3507,8 +3506,8 @@ def main():
     global __filter_choices__
     global __default_filter__
     global __no_filter_str__
-    choices = list(filter( lambda s: s != __no_filter_str__,  __filter_choices__ ))
-    choices_str = reduce( lambda a,b: a + ', ' + b,  choices )
+    choices = [s for s in __filter_choices__ if s != __no_filter_str__]
+    choices_str = reduce(lambda a, b: a + ', ' + b, choices)
     parser.add_option(
         '-f', '--filter',
         type='choice', choices=choices,
@@ -3541,7 +3540,7 @@ def main():
         parser.error('incorrect number of arguments')
 
     # NOTE: if True, then we use the individual options.
-    if options.animate_all == False:
+    if not options.animate_all:
         options.animate = False
         options.animate_highlight = False
 
@@ -3555,15 +3554,15 @@ def main():
     global __icon_path__
     icon_file = "%sxdoticon.png" % __icon_path__
     icon_loaded = False
-    if os.path.isfile( icon_file ):
+    if os.path.isfile(icon_file):
         try:
-            win.set_default_icon_from_file( icon_file )
+            win.set_default_icon_from_file(icon_file)
             icon_loaded = True
         except Exception as err:
             print(err, file=sys.stderr)
             pass
     if not icon_loaded:  # use hardcoded icon if no file available. (This doesn't help in Unity.)
-        win.set_default_icon( APPICON_PIXBUF )
+        win.set_default_icon(APPICON_PIXBUF)
 
     win.set_filter(options.filter)
     win.set_animated(options.animate, options.animate_highlight)
@@ -3891,7 +3890,7 @@ brewer_colors = {
 
 # Full license text. Short lines to fit standard About dialog.
 #
-__license_text__="""This program is free software: you can redistribute it
+__license_text__ = """This program is free software: you can redistribute it
 and/or modify it under the terms of the GNU Lesser
 General Public License as published by the
 Free Software Foundation, either version 3 of the
@@ -4042,7 +4041,7 @@ APPICON_PIXBUF = GdkPixbuf.Pixbuf.new_from_data(zlib.decompress(base64.b64decode
 #
 # The content of the generated help.xdot has been pasted into this string.
 #
-__online_help_xdotcode__="""digraph G {
+__online_help_xdotcode__ = """digraph G {
     node [label="\\N"];
     graph [bb="0,0,4236.1,2308",
         _draw_="c 9 -#ffffffff C 9 -#ffffffff P 4 0 -1 0 2308 4237 2308 4237 -1 ",
