@@ -43,6 +43,7 @@ import time
 import re
 import zlib
 import base64
+from itertools import chain
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -702,15 +703,17 @@ class Graph(Shape):
         self.nodes = nodes
         self.edges = edges
 
-        # List of items to search through for filter_items_by_text().
+        # Create search data for filter_items_by_text().
         #
         # We generate this here (only once) to speed up the search;
         # we can do this because the graph content never changes after
         # the graph (any given, particular graph) is loaded.
         #
-        # item format: (node_obj, list_of_text_strings_in_node)
-        self.items_and_texts = [(x, x.get_texts()) for x in self.nodes]
-        self.items_and_texts.extend([(x, x.get_texts()) for x in self.edges])
+        # We lowercase the text here to support case-insensitive searching.
+        #
+        # item format: (node_or_edge_obj, a_string_containing_all_text_in_it)
+        self.items_and_texts = [(x, (" ".join(x.get_texts())).lower())
+                                for x in chain(self.nodes, self.edges)]
 
         self.nodes_by_name = {}
         for n in self.nodes:
@@ -799,22 +802,29 @@ class Graph(Shape):
         if len(text) == 0:
             return []
 
-        def match_text(term, texts):  # str, list of str
-            # Return true if "term" is contained in at least one string of the list "texts".
+        def match_text(fragments, texts):  # list of str, list of str
+            # Return true if all fragments are contained in at least one string of the list "texts".
+            # We assume case (upper/lower) has been already taken care of.
 
-            # case-sensitive match
-            # return any(filter(lambda t: t.find(term) != -1, texts))
-
-            # case-insensitive match (user-friendly)
+            # OLD stuff for one fragment only
             #
             # regex version (would require UI for handling regex parse errors)
-            # return any(filter(lambda t: re.search(term,t,re.IGNORECASE) is not None, texts))
+            # return any(text for text in texts if re.search(fragment, t) is not None)
             #
             # non-regex version
-            term = term.lower()
-            return any(t for t in texts if t.lower().find(term) != -1)
+            # return any(text for text in texts if text.find(fragment) != -1)
 
-        matching_pairs = (o for o in self.items_and_texts if match_text(text, o[1]))
+            # Fragment search, a bit like EMACS helm-swoop (but slightly less smart: in ours, each
+            # fragment is literal, i.e. its letters must be found consecutively in the search target)
+            # https://github.com/ashiklom/helm-swoop
+            #
+            # TODO: We could also add a helpful list view listing all results and allowing to jump to
+            # them, like helm-swoop does. Maybe in a future version.
+            #
+            return any(text for text in texts if all(text.find(fragment) != -1 for fragment in fragments))
+
+        fragments = [fragment.lower() for fragment in text.split()]  # case insensitive, split to fragments
+        matching_pairs = (o for o in self.items_and_texts if match_text(fragments, [o[1]]))
         matching_items = [o[0] for o in matching_pairs]  # discard text lists
 
         return matching_items
