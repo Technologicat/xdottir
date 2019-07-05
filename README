@@ -1,4 +1,4 @@
-XDottir is a usability-focused next-gen XDot fork with fuzzy search and an animated GUI. It runs on Python 3 with Gtk 3.
+XDottir is a usability-focused XDot fork with fuzzy search and an animated GUI. It runs on Python 3 with Gtk 3.
 
 
 ----------------
@@ -43,6 +43,8 @@ Mouse behaviour and keyboard shortcuts
 
 Below is a complete list for both XDot 0.4 and XDottir 1.0. Unless otherwise specified, each item applies to both programs.
 
+Note the main version of XDot has since evolved; as of this writing, the current version is 1.1, and the below no longer necessarily applies to it.
+
 -----
 Mouse
 -----
@@ -78,6 +80,7 @@ Arrow keys                 = Pan view
 +, =, Page up, keypad +    = Zoom in
 -, Page down, keypad -     = Zoom out
 F                          = Zoom to fit            [XDottir only]
+Ctrl+F                     = Find                   [XDottir only]
 1, keypad 1                = Zoom to 100%           [XDottir only]
 
 Ctrl+O                     = Open file...           [XDottir only]
@@ -114,28 +117,28 @@ Notes:
 
 - The highlight from Find disappears when the mouse pointer moves over the graph. This is intentional, so that it is possible to explore the graph normally. To re-show the highlight for the same search term, hover the mouse cursor over the Find field, or focus it by pressing Ctrl+F.
 
-- When cycling through the found items, they are (currently) not sorted.
+- When cycling through the matches, they are (currently) not sorted.
 
 
--------
-History
--------
+----------------
+History & future
+----------------
 
-XDottir started as a small GUI improvement project for XDot 0.4, inspired by animated OS X GUIs. As the most important addition that was not pure chrome, the Find feature was added to help source code exploration with Pyan3 [https://github.com/Technologicat/pyan] (which at that time was just Pyan, for Python 2). The fork was originally called XDot 1.0 (since a major UI overhaul), but since nowadays everyone and their cat has their own XDot fork, this one was rebranded after being ported to Python 3 and Gtk 3. At this point the EMACS helm-swoop inspired fuzzy fragment search was added.
+XDottir was forked from XDot 0.4 in 2012 as a small GUI improvement project, inspired by animated OS X GUIs. As the most important addition that was not pure chrome, the Find feature was added to help source code exploration with Pyan3 [https://github.com/Technologicat/pyan] (which at that time was just Pyan, and for Python 2).
+
+The fork was originally called "XDot 1.0" (as it was a major UI overhaul), but since nowadays everyone and their cat has their own XDot fork, and there was actually an official XDot 1.0 in 2018, this fork was rebranded for disambiguation purposes, after being ported to Python 3 and Gtk 3 in 2019. At this point the EMACS helm-swoop inspired fuzzy fragment search was added.
 
 XDottir currently lives at:
 
 https://github.com/Technologicat/xdottir
 
-The final version for Python 2 is tagged as "python2". It can also be found, among a large bunch of other old files, at:
+The final version for Python 2 is tagged as "python2".
 
-https://yousource.it.jyu.fi/jjrandom2/miniprojects/blobs/master/refactoring/
+The original XDot by José Fonseca lives at:
 
-The original XDot 0.4 by José Fonseca is available at:
+https://github.com/jrfonseca/xdot.py
 
-https://code.google.com/p/jrfonseca/wiki/XDot#Download
-
-Note that even current Linux distributions may ship an even older XDot version which does not have the -n (no filter) option.
+The optimal future path is to PR the relevant changes from XDottir into the current main version of XDot (nowadays officially called xdot.py), and then drop the fork. However, the XDot codebase has evolved considerably since 2012, the fork fulfills my current needs, and I don't have much time to devote to the project. We'll see.
 
 
 ---------
