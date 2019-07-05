@@ -1,67 +1,47 @@
-This XDot was modified by Juha Jeronen, based on the original version 0.4 by José Fonseca.
+XDottir is a usability-focused next-gen XDot fork with fuzzy search and an animated GUI. It runs on Python 3 with Gtk 3.
 
 
-Modifications:
+----------------
+XDottir features
+----------------
 
-- Added a "Find" feature for searching graph elements by the text they display. The search is always case-insensitive. By default the Find system runs in incremental mode; for viewing a large graph on a slow computer, there is a new "-N" command line option to use non-incremental mode.
+- Fuzzy find. Search graph elements by fragments of the text they display. Always case-insensitive. Separate fragments by whitespace. All must match, but will match in any order. For example, "to ini" will match a node displaying the text "init_tools". Inspired by EMACS helm-swoop [https://github.com/ashiklom/helm-swoop].
 
-- The hover-over-node highlight system has been extended to make exploring large graphs easier. See section [Mouse behaviour and keyboard shortcuts] below.
+- By default Find is incremental (as-you-type). For viewing a large graph on a slow computer, use the "-N" command line option to run in non-incremental mode.
 
-- The GraphViz layout filter for .dot files can now be changed in the GUI. Changing it will reload the current graph, using the newly selected layout.
+- Hover-highlight system to help explore large graphs. See section [Mouse behaviour and keyboard shortcuts] below.
 
-- Files in the .xdot format are now always loaded without a filter. The check is based on the filename extension; the "-n" command-line option is still provided for unfiltered reading of .xdot files from stdin.
+- The GraphViz layout filter for .dot files can be chosen in the GUI. Changing it will reload the current graph, using the newly selected layout. (Except when the input is in the pre-rendered .xdot format, or read from stdin.)
 
-- An integrated help is provided, explaining the harder-to-discover features. This is implemented as a built-in .xdot graph, which is loaded when the help button is clicked.
+- Files in the pre-rendered .xdot format are always loaded without a GraphViz filter. The check is based on the filename extension. The "-n" command-line option allows unfiltered reading of .xdot from stdin.
 
-- Keyboard shortcuts added for Zoom to fit (F) and Zoom to 100% (1).
+- An integrated help is provided, explaining any hard-to-discover features. This is implemented as a built-in .xdot graph, which is loaded when the help button is clicked.
 
-- Keyboard shortcut added for Open (Ctrl+O).
+- Animated focus shift, highlighting, zooming. Improves onlooker experience in pair programming and similar multi-user contexts. On slow computers, use the "-b" and "-a" switches to disable animations.
 
-- Tooltips added for the toolbar buttons, with the text showing also the keyboard shortcuts.
-
-- The open dialog remembers the last used directory within the same session.
-
-- Focus animation now follows a nonlinear tanh spacing for a smoother-looking
-  experience (slow-fast-slow).
-
-- Animated highlighting (potentially heavy; can use "-b" to switch off).
-
-- Animated zooming and arrow-key panning (potentially heavy; can use "-a" to switch off).
-
-- Uses system highlight color, queried from GTK.
-
-  For nodes, the actual node highlight color is mixed from the node's original color
-  and alpha, and the system highlight with alpha=1.0.
-
-  For area zooming (shift+drag), the system highlight color is used with alpha=0.25.
-
-- [No graph loaded] is shown when no graph is loaded (input error, no filename on command line, etc.).
-
-- [Empty input] is shown when an empty graph is loaded (blank file, or valid graph but no nodes).
-
-- Minor UI fixes (e.g. mouse cursor now changes to busy while loading).
+- Keyboard shortcuts for pretty much everything.
 
 
-In addition, the original contains some functionality that may be difficult to discover. Documenting these, from reading the source code:
+Hard-to-discover functionality inherited from XDot 0.4:
 
-- Shift-dragging allows to select a rectangular area to zoom to.
+- Shift-drag to zoom into a rectangular area.
 
-- Ctrl-dragging zooms smoothly.
+- Ctrl-drag to zoom smoothly.
 
-- Hovering the mouse cursor over a node highlights it.
+- Hover the mouse cursor over a node to highlight it.
 
-- Hovering over the end of a link (graph edge, "arrow") highlights the node at the other end of the link. (This is useful for exploring graphs.)
+- Hover over the end of a link (graph edge, "arrow") to highlight the node at the other end of the link. Useful for exploring graphs.
 
-- Clicking a highlighted node centers it. Animated. The animation automatically zooms out and back in, if the view is highly zoomed and the destination node is near the edge of the view. If the destination is clearly visible, then the animation just pans the view.
+- Click a highlighted node to center it. Animated. The animation automatically zooms out and back in, if the view is highly zoomed and the destination node is near the edge of the view. If the destination is clearly visible, then the animation just pans the view.
 
-- Clicking the end of a highlighted link (graph edge, "arrow") jumps to and centers the node at the other end of the link. (Animated.)
+- Click the end of a highlighted link (graph edge, "arrow") to jump to (and center) the node at the other end of the link. Animated.
 
 
 --------------------------------------
 Mouse behaviour and keyboard shortcuts
 --------------------------------------
 
-Here is a complete list for both the original and modified versions of XDot. Unless otherwise specified, each item applies to both versions.
+Below is a complete list for both XDot 0.4 and XDottir 1.0. Unless otherwise specified, each item applies to both programs.
 
 -----
 Mouse
@@ -71,17 +51,17 @@ Click the end of a link    = Center view to the node at the other end of the lin
 Click a node               = Center view to clicked node
 
 Right-click end of link    = Center view to the node at the other end of the link
-                             and zoom to 100%                              [mod. version only]
-Right-click a node         = Center view to clicked node and zoom to 100%  [mod. version only]
+                             and zoom to 100%                              [XDottir only]
+Right-click a node         = Center view to clicked node and zoom to 100%  [XDottir only]
 
 Hover on the end of a link = Highlight link and the node at the other end
-Hover on a node            = Highlight node                              [original version]
-                             Highlight node and all its outgoing links   [modified version]
-Alt+hover on a node        = Highlight node and all its incoming links   [modified version only]
+Hover on a node            = Highlight node                                [XDot]
+                             Highlight node and all its outgoing links     [XDottir]
+Alt+hover on a node        = Highlight node and all its incoming links     [XDottir only]
 Shift+hover on a node      = Highlight node, all its outgoing links
-                             and the nodes connected by the links        [modified version only]
+                             and the nodes connected by the links          [XDottir only]
 Ctrl+hover on a node       = Highlight node, all its incoming links
-                             and the nodes connected by the links        [modified version only]
+                             and the nodes connected by the links          [XDottir only]
 
 Mouse wheel up/down        = Zoom view in/out
 Drag                       = Pan view
@@ -97,17 +77,17 @@ Keyboard
 Arrow keys                 = Pan view
 +, =, Page up, keypad +    = Zoom in
 -, Page down, keypad -     = Zoom out
-F                          = Zoom to fit            [modified version only]
-1, keypad 1                = Zoom to 100%           [modified version only]
+F                          = Zoom to fit            [XDottir only]
+1, keypad 1                = Zoom to 100%           [XDottir only]
 
-Ctrl+O                     = Open file...           [modified version only]
+Ctrl+O                     = Open file...           [XDottir only]
 R                          = Reload current file
-Q                          = Quit XDot
+Q                          = Quit
 
 Escape                     = Cancel current mouse drag action
 
 
-In addition, the modified version comes with a Find system:
+XDottir comes with a Find system. Fragments to search for can be in any order. Separate by whitespace. All must match.
 
 If in incremental Find mode (default):
 
@@ -132,20 +112,34 @@ Shift+N                    = Jump to previous match
 
 Notes:
 
-- If there are no matches when the search runs, the background of the Find field becomes red. When there are matches, it turns back to white.
-
 - The highlight from Find disappears when the mouse pointer moves over the graph. This is intentional, so that it is possible to explore the graph normally. To re-show the highlight for the same search term, hover the mouse cursor over the Find field, or focus it by pressing Ctrl+F.
 
-- When cycling through the found items, they are (currently) not sorted into any meaningful order.
+- When cycling through the found items, they are (currently) not sorted.
 
 
-This modified version is available at:
+-------
+History
+-------
+
+XDottir started as a small GUI improvement project for XDot 0.4, inspired by animated OS X GUIs. As the most important addition that was not pure chrome, the Find feature was added to help source code exploration with Pyan3 [https://github.com/Technologicat/pyan] (which at that time was just Pyan, for Python 2). The fork was originally called XDot 1.0 (since a major UI overhaul), but since nowadays everyone and their cat has their own XDot fork, this one was rebranded after being ported to Python 3 and Gtk 3. At this point the EMACS helm-swoop inspired fuzzy fragment search was added.
+
+XDottir currently lives at:
+
+https://github.com/Technologicat/xdottir
+
+The final version for Python 2 is tagged as "python2". It can also be found, among a large bunch of other old files, at:
 
 https://yousource.it.jyu.fi/jjrandom2/miniprojects/blobs/master/refactoring/
 
-The original by José Fonseca is available at:
+The original XDot 0.4 by José Fonseca is available at:
 
 https://code.google.com/p/jrfonseca/wiki/XDot#Download
 
-(Note that even current Linux distributions may ship a version which does not have the -n (no filter) option.)
+Note that even current Linux distributions may ship an even older XDot version which does not have the -n (no filter) option.
 
+
+---------
+Etymology
+---------
+
+Next-gen, based on XDot. Get it?
