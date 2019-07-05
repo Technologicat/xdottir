@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Written in 2011 by Bjarni R. Einarsson <http://bre.klaki.net/>
-# This script is in the Public Domain.
 #
+# Written in 2011 by Bjarni R. Einarsson <http://bre.klaki.net/>
 # Converted in 2019 to Python 3 and PyGObject by Juha Jeronen.
+# This script is in the Public Domain.
 #
 # This is a simple tool for converting image files to compact PyGObject code for
 # embedding in Python scripts.  It can read whatever formats PyGObject can.
@@ -41,14 +41,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         args = sys.argv[1:]
         args.append('PIXBUF')
-        print(image_to_code(args[1], args[0]))
-        print()
-        print("# Imports you'll need to run that:\n"
-              "import zlib\n"
+        print("import zlib\n"
               "import base64\n"
               "import gi\n"
               "gi.require_version('Gtk', '3.0')\n"
               "from gi.repository import GdkPixbuf")
+        print(image_to_code(args[1], args[0]))
+        print()
     else:
         print('Usage: %s file.png [variable-name]' % sys.argv[0])
         sys.exit(1)
