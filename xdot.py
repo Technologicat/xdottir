@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Jose Fonseca
 #           2012-2019 Juha Jeronen (the Find field, extension of graph exploration functionality,
