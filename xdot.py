@@ -373,7 +373,16 @@ class TextShape(Shape):
             layout.set_font_description(font)
 
             # set text
-            layout.set_text(self.t)  # FIXME: crashes here on Linux Mint 19.1 with ANTIALIAS_BEST, so using ANTIALIAS_GOOD for now.
+            #
+            # FIXME: depending on the phase of the moon, layout.set_text takes either 2 or 3 arguments
+            # FIXME: (including self). The low-level docs suggest the extra argument is the length
+            # FIXME: of the text.
+            #
+            # FIXME: crashes here on Linux Mint 19.1 with ANTIALIAS_BEST, so using ANTIALIAS_GOOD for now.
+            try:
+                layout.set_text(self.t, len(self.t))
+            except TypeError:
+                layout.set_text(self.t)
 
             # cache it
             self.layout = layout
